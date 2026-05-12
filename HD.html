@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>History Defense</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#030712;color:#e2e8f0;font-family:'Share Tech Mono',monospace;}
+body{display:flex;flex-direction:column;}
+/* HUD */
+#hud{display:flex;align-items:center;gap:12px;padding:0 10px;height:50px;background:linear-gradient(90deg,#04090f,#060c18,#04090f);border-bottom:1px solid #1e3a5f;flex-shrink:0;}
+.hi{display:flex;flex-direction:column;align-items:center;min-width:48px;}
+.hl{font-size:7px;color:#475569;text-transform:uppercase;letter-spacing:1px;}
+.hv{font-size:15px;font-weight:700;font-family:'Orbitron',sans-serif;line-height:1.1;}
+.vp{color:#f59e0b;text-shadow:0 0 8px #f59e0b80;}
+.vs{color:#f472b6;text-shadow:0 0 8px #f472b680;}
+.vw{color:#a78bfa;text-shadow:0 0 8px #a78bfa80;}
+.vh{color:#34d399;text-shadow:0 0 8px #34d39980;}
+.ve{color:#fb7185;text-shadow:0 0 8px #fb718580;}
+.hsep{width:1px;height:26px;background:#1e3a5f;flex-shrink:0;}
+#xp-blk{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;max-width:200px;}
+#xp-lbl{font-size:8px;color:#7dd3fc;font-family:'Orbitron',sans-serif;letter-spacing:1px;}
+#xp-wrap{width:100%;height:7px;background:#0f2040;border-radius:3px;overflow:hidden;border:1px solid #1e3a5f;}
+#xp-bar{height:100%;background:linear-gradient(90deg,#7c3aed,#38bdf8);border-radius:3px;transition:width .4s;}
+#htitle{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px;margin-left:auto;white-space:nowrap;}
+/* MAIN */
+#main-area{display:flex;flex:1;overflow:hidden;}
+#canvas-wrap{flex:1;position:relative;overflow:hidden;}
+canvas{display:block;cursor:crosshair;}
+/* RIGHT PANEL */
+#rp{width:215px;background:linear-gradient(180deg,#060c18,#030712);border-left:1px solid #1e3a5f;display:flex;flex-direction:column;padding:7px;gap:5px;overflow-y:auto;flex-shrink:0;}
+#rp::-webkit-scrollbar{width:3px;}
+#rp::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px;}
+.ptitle{font-family:'Orbitron',sans-serif;font-size:8px;color:#7dd3fc;text-transform:uppercase;letter-spacing:2px;border-bottom:1px solid #1e3a5f;padding-bottom:3px;margin-bottom:2px;flex-shrink:0;}
+/* Tower buttons */
+.tbtn{border:1px solid #1e3a5f;background:rgba(6,12,24,.95);color:#e2e8f0;padding:4px 5px;border-radius:5px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:9px;text-align:left;display:flex;align-items:center;gap:5px;width:100%;margin-bottom:2px;position:relative;transition:border-color .2s;}
+.tbtn:hover:not(.locked){background:rgba(30,58,95,.9);border-color:#3b82f6;}
+.tbtn.sel-t{border-color:#60a5fa;box-shadow:0 0 8px #3b82f640;}
+.tbtn.locked{opacity:.4;cursor:not-allowed;}
+.tico{width:24px;height:24px;border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.tinfo{flex:1;min-width:0;}
+.tname{font-size:9px;font-weight:700;}
+.tsub{font-size:7px;color:#475569;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tbadge{position:absolute;right:3px;top:50%;transform:translateY(-50%);font-size:8px;color:#475569;}
+/* Selected info */
+#sel-panel{border:1px solid #1e3a5f;border-radius:5px;padding:6px;background:rgba(6,12,24,.9);display:none;}
+.sr{display:flex;justify-content:space-between;font-size:8px;margin-bottom:1px;}
+.sr span:first-child{color:#64748b;}.sr span:last-child{color:#7dd3fc;}
+#upg-panel{border:1px solid #1e3a5f;border-radius:5px;padding:6px;background:rgba(6,12,24,.9);display:none;}
+.ur{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+.ur span{font-size:8px;color:#64748b;}.ur .uc{color:#7dd3fc;font-size:8px;}
+.ur button{background:rgba(21,128,61,.35);border:1px solid #16a34a;color:#86efac;padding:2px 5px;border-radius:3px;cursor:pointer;font-size:7px;font-family:'Share Tech Mono',monospace;}
+.ur button:hover{background:rgba(21,128,61,.65);}
+.ur button:disabled{opacity:.35;cursor:not-allowed;}
+#sell-btn{background:rgba(127,29,29,.5);border:1px solid #7f1d1d;color:#fca5a5;padding:4px;border-radius:4px;cursor:pointer;font-size:8px;width:100%;display:none;margin-top:2px;}
+/* Wave gate progress */
+#wave-gate{border:1px solid #1e3a5f;border-radius:5px;padding:6px;background:rgba(6,12,24,.9);}
+#wg-label{font-size:8px;color:#94a3b8;margin-bottom:3px;text-align:center;}
+#wg-bar-wrap{width:100%;height:6px;background:#0f2040;border-radius:3px;overflow:hidden;border:1px solid #1e3a5f;margin-bottom:3px;}
+#wg-bar{height:100%;background:linear-gradient(90deg,#a78bfa,#f472b6);border-radius:3px;transition:width .3s;}
+#wg-dots{display:flex;gap:2px;justify-content:center;}
+.wg-dot{width:14px;height:6px;border-radius:2px;background:#1e3a5f;}
+.wg-dot.filled{background:#a78bfa;}
+/* Abilities */
+.abtn{border:1px solid #1e3a5f;background:rgba(6,12,24,.9);color:#e2e8f0;padding:4px 6px;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:8px;text-align:left;width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;transition:all .2s;}
+.abtn:hover{background:rgba(30,58,95,.9);}.a-cost{color:#f59e0b;}
+/* Controls */
+#quiz-btn{background:linear-gradient(135deg,#7c3aed,#4c1d95);border:1px solid #a78bfa;color:#e9d5ff;padding:6px;border-radius:5px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;width:100%;letter-spacing:1px;transition:all .2s;margin-bottom:3px;}
+#quiz-btn:hover{box-shadow:0 0 12px #7c3aed60;}
+#streak-hint{text-align:center;font-size:8px;color:#f472b6;margin-bottom:3px;}
+#next-wave-btn{background:linear-gradient(135deg,#1d4ed8,#1e3a8a);border:1px solid #3b82f6;color:#bfdbfe;padding:6px;border-radius:5px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;width:100%;letter-spacing:1px;transition:all .2s;margin-bottom:2px;}
+#next-wave-btn:hover:not(:disabled){box-shadow:0 0 12px #3b82f640;}
+#next-wave-btn:disabled{opacity:.35;cursor:not-allowed;}
+#pause-btn{background:rgba(6,12,24,.9);border:1px solid #334155;color:#94a3b8;padding:4px;border-radius:4px;cursor:pointer;font-size:8px;width:100%;transition:all .2s;margin-bottom:2px;}
+#review-btn{background:rgba(6,12,24,.9);border:1px solid #334155;color:#94a3b8;padding:4px;border-radius:4px;cursor:pointer;font-size:8px;width:100%;transition:all .2s;}
+#review-btn:hover{border-color:#7c3aed;color:#a78bfa;}
+/* CREDITS */
+#credits{height:22px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#334155;background:#030712;border-top:1px solid #0f2040;flex-shrink:0;letter-spacing:1px;}
+#credits span{color:#475569;}
+/* OVERLAYS */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;}
+/* ROLE SCREEN */
+#role-screen{background:rgba(3,7,18,.98);flex-direction:column;gap:20px;}
+.gtitle{font-family:'Orbitron',sans-serif;font-size:clamp(22px,3.5vw,44px);font-weight:900;background:linear-gradient(135deg,#38bdf8,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:4px;text-align:center;}
+.gsub{font-size:11px;color:#64748b;letter-spacing:2px;text-align:center;}
+.role-cards{display:flex;gap:20px;}
+.role-card{background:rgba(10,16,30,.95);border:2px solid #1e3a5f;border-radius:12px;padding:24px 28px;cursor:pointer;text-align:center;transition:all .25s;min-width:180px;}
+.role-card:hover{border-color:#7c3aed;background:rgba(30,58,95,.6);transform:scale(1.04);box-shadow:0 0 24px #7c3aed40;}
+.role-icon{font-size:36px;margin-bottom:10px;}
+.role-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;letter-spacing:2px;margin-bottom:6px;}
+.role-desc{font-size:10px;color:#64748b;line-height:1.6;}
+/* TITLE SCREEN */
+#title-screen{display:none;background:rgba(3,7,18,.97);flex-direction:column;gap:16px;}
+.instr{background:rgba(10,16,30,.95);border:1px solid #1e3a5f;border-radius:8px;padding:14px 18px;max-width:500px;font-size:10px;color:#94a3b8;line-height:1.9;}
+.instr h3{font-family:'Orbitron',sans-serif;color:#7dd3fc;font-size:10px;margin-bottom:7px;}
+.bigbtn{background:linear-gradient(135deg,#1d4ed8,#7c3aed);border:1px solid #60a5fa;color:white;padding:12px 32px;border-radius:8px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;transition:all .2s;}
+.bigbtn:hover{transform:scale(1.04);box-shadow:0 0 26px #3b82f660;}
+/* TEACHER PWD */
+#teacher-pwd-modal{position:fixed;inset:0;background:rgba(3,7,18,.95);display:none;align-items:center;justify-content:center;z-index:300;}
+#teacher-pwd-modal.active{display:flex;}
+.pwd-box{background:linear-gradient(135deg,#0a0f1a,#060c18);border:2px solid #7c3aed;border-radius:12px;padding:28px;max-width:340px;width:90%;box-shadow:0 0 40px #7c3aed40;}
+.pwd-box h3{font-family:'Orbitron',sans-serif;font-size:13px;color:#7dd3fc;margin-bottom:14px;text-align:center;}
+.pwd-inp{width:100%;background:rgba(6,12,24,.9);border:1px solid #1e3a5f;color:#e2e8f0;padding:9px 12px;border-radius:6px;font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;margin-bottom:6px;}
+.pwd-inp:focus{border-color:#7c3aed;}
+#pwd-err{color:#fb7185;font-size:10px;display:none;margin-bottom:8px;}
+.pwd-btns{display:flex;gap:8px;}
+.pbtn{flex:1;padding:8px;border-radius:6px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;border:1px solid;transition:all .2s;}
+.pbtn.ok{background:rgba(124,58,237,.5);border-color:#7c3aed;color:#e9d5ff;}
+.pbtn.ok:hover{background:rgba(124,58,237,.8);}
+.pbtn.cancel{background:rgba(30,41,59,.5);border-color:#334155;color:#94a3b8;}
+/* TEACHER PORTAL */
+#teacher-portal{position:fixed;inset:0;background:#030712;display:none;flex-direction:column;z-index:200;}
+#tp-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #1e3a5f;flex-shrink:0;background:#060c18;}
+#tp-header h2{font-family:'Orbitron',sans-serif;font-size:14px;color:#7dd3fc;letter-spacing:2px;}
+.tpbtn{background:rgba(30,41,59,.7);border:1px solid #334155;color:#94a3b8;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;transition:all .2s;}
+.tpbtn:hover{border-color:#64748b;color:#e2e8f0;}
+#tp-body{flex:1;overflow-y:auto;padding:16px 20px;}
+#tp-body::-webkit-scrollbar{width:5px;}
+#tp-body::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px;}
+.tp-q{background:rgba(10,16,30,.95);border:1px solid #1e3a5f;border-radius:10px;padding:16px;margin-bottom:16px;}
+.tp-unit{font-size:9px;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+.tp-stim{background:rgba(124,58,237,.08);border:1px solid #7c3aed30;border-radius:7px;padding:10px;margin-bottom:10px;font-size:10px;}
+.tp-stim-lbl{font-size:8px;color:#7c3aed;text-transform:uppercase;letter-spacing:2px;margin-bottom:5px;}
+.tp-q-text{font-size:12px;color:#e2e8f0;margin-bottom:10px;line-height:1.5;}
+.tp-choice{padding:6px 10px;border-radius:5px;font-size:10px;margin-bottom:4px;border:1px solid transparent;}
+.tp-correct{background:rgba(21,128,61,.25);border-color:#16a34a;color:#86efac;}
+.tp-wrong{background:rgba(51,65,85,.4);border-color:#334155;color:#94a3b8;}
+.tp-expl{font-size:9px;color:#7dd3fc;margin-top:4px;margin-left:10px;line-height:1.5;}
+.tp-wrong-expl{font-size:9px;color:#64748b;margin-top:3px;margin-left:10px;line-height:1.5;}
+/* QUIZ MODAL */
+#quiz-modal{position:fixed;inset:0;background:rgba(3,7,18,.93);display:none;align-items:center;justify-content:center;z-index:200;}
+#quiz-modal.active{display:flex;animation:qfade .25s ease;}
+@keyframes qfade{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.qbox{background:linear-gradient(135deg,#0a0f1a,#060c18);border:2px solid #7c3aed;border-radius:12px;padding:20px;max-width:600px;width:95%;max-height:92vh;overflow-y:auto;box-shadow:0 0 50px #7c3aed30;}
+.qbox::-webkit-scrollbar{width:4px;}
+.qbox::-webkit-scrollbar-thumb{background:#7c3aed40;}
+.q-unit-lbl{font-size:8px;color:#a78bfa;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.stim-box{background:rgba(124,58,237,.08);border:1px solid #7c3aed30;border-radius:7px;padding:10px;margin-bottom:12px;}
+.stim-type{font-size:8px;color:#7c3aed;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
+.stim-content{font-size:10px;color:#94a3b8;line-height:1.6;white-space:pre-wrap;}
+.stim-content.is-quote{border-left:3px solid #7c3aed;padding-left:10px;color:#c4b5fd;font-style:italic;}
+.stim-source{font-size:9px;color:#64748b;margin-top:5px;font-style:normal;}
+.q-streak-banner{background:rgba(244,114,182,.12);border:1px solid #f472b640;border-radius:5px;padding:5px 10px;font-size:10px;color:#f472b6;margin-bottom:10px;text-align:center;font-family:'Orbitron',sans-serif;}
+.q-text{font-size:12px;color:#e2e8f0;line-height:1.6;margin-bottom:12px;}
+.q-choices{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.cbtn{background:rgba(6,12,24,.95);border:1px solid #1e3a5f;color:#cbd5e1;padding:8px 11px;border-radius:6px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:10px;text-align:left;transition:all .18s;line-height:1.4;}
+.cbtn:hover:not(:disabled){background:rgba(30,58,95,.9);border-color:#7c3aed;}
+.cbtn.correct{background:rgba(21,128,61,.3);border-color:#16a34a;color:#86efac;}
+.cbtn.incorrect{background:rgba(185,28,28,.3);border-color:#dc2626;color:#fca5a5;}
+.cbtn:disabled{cursor:default;}
+.q-result{background:rgba(6,12,24,.95);border-radius:7px;padding:11px;margin-bottom:10px;display:none;}
+.q-result.ok{border-left:3px solid #16a34a;}.q-result.bad{border-left:3px solid #dc2626;}
+.qverdict{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;margin-bottom:7px;}
+.result-section{margin-bottom:7px;padding:7px;background:rgba(0,0,0,.3);border-radius:5px;}
+.rs-label{font-size:8px;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.rs-text{font-size:10px;line-height:1.5;}
+.qcont{background:linear-gradient(135deg,#7c3aed,#1d4ed8);border:1px solid #a78bfa;color:white;padding:8px 22px;border-radius:6px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;transition:all .2s;display:none;}
+.qcont:hover{box-shadow:0 0 16px #7c3aed60;}
+/* REVIEW MODAL */
+#review-modal{position:fixed;inset:0;background:rgba(3,7,18,.96);display:none;flex-direction:column;z-index:250;}
+#rm-header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #1e3a5f;flex-shrink:0;background:#060c18;}
+#rm-header h2{font-family:'Orbitron',sans-serif;font-size:13px;color:#fb7185;letter-spacing:2px;}
+#rm-body{flex:1;overflow-y:auto;padding:16px 20px;}
+#rm-body::-webkit-scrollbar{width:5px;}
+#rm-body::-webkit-scrollbar-thumb{background:#7f1d1d40;}
+.rm-q{background:rgba(127,29,29,.1);border:1px solid #7f1d1d;border-radius:8px;padding:14px;margin-bottom:12px;}
+.rm-unit{font-size:8px;color:#fb7185;letter-spacing:2px;text-transform:uppercase;margin-bottom:5px;}
+.rm-qtext{font-size:11px;color:#e2e8f0;margin-bottom:8px;line-height:1.5;}
+.rm-your{background:rgba(185,28,28,.2);border:1px solid #dc2626;border-radius:4px;padding:6px 8px;font-size:10px;color:#fca5a5;margin-bottom:5px;}
+.rm-correct{background:rgba(21,128,61,.2);border:1px solid #16a34a;border-radius:4px;padding:6px 8px;font-size:10px;color:#86efac;}
+.rm-expl{font-size:9px;color:#7dd3fc;margin-top:5px;line-height:1.5;}
+/* GAME OVER */
+#gameover-screen{display:none;background:rgba(3,7,18,.97);flex-direction:column;gap:14px;text-align:center;}
+.go-stats{color:#64748b;font-size:11px;line-height:2.3;}.go-stats span{color:#7dd3fc;}
+/* OVERLAYS on canvas */
+#wave-announce{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:clamp(16px,2.5vw,28px);font-weight:900;color:#a78bfa;text-shadow:0 0 22px #a78bfa;pointer-events:none;opacity:0;transition:opacity .5s;text-align:center;white-space:nowrap;}
+#wave-announce.show{opacity:1;}
+#levelup-pop{position:absolute;top:33%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,22px);font-weight:900;color:#fbbf24;text-shadow:0 0 20px #fbbf24;pointer-events:none;opacity:0;transition:opacity .5s;text-align:center;white-space:pre-line;}
+#levelup-pop.show{opacity:1;}
+#toast{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(6,12,24,.95);border:1px solid #1e3a5f;color:#94a3b8;padding:5px 14px;border-radius:14px;font-size:9px;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;}
+#toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<!-- ROLE SCREEN -->
+<div class="overlay" id="role-screen">
+  <div class="gtitle">HISTORY DEFENSE</div>
+  <div class="gsub">Select your role to begin</div>
+  <div class="role-cards">
+    <div class="role-card" onclick="selectRole('student')">
+      <div class="role-icon">🎓</div>
+      <div class="role-name" style="color:#38bdf8">STUDENT</div>
+      <div class="role-desc">Answer history questions, earn points, defend the base, and level up your towers</div>
+    </div>
+    <div class="role-card" onclick="selectRole('teacher')">
+      <div class="role-icon">📖</div>
+      <div class="role-name" style="color:#a78bfa">TEACHER</div>
+      <div class="role-desc">View the complete question bank with answer keys and full explanations</div>
+    </div>
+  </div>
+  <div style="font-size:9px;color:#334155;letter-spacing:1px;">Made with ❤️ by Ren / Julian Hunter</div>
+</div>
+
+<!-- TEACHER PASSWORD -->
+<div id="teacher-pwd-modal">
+  <div class="pwd-box">
+    <h3>🔒 TEACHER ACCESS</h3>
+    <input class="pwd-inp" type="password" id="teacher-pwd" placeholder="Enter password..." onkeydown="if(event.key==='Enter')checkPwd()"/>
+    <div id="pwd-err">❌ Incorrect password. Try again.</div>
+    <div class="pwd-btns">
+      <button class="pbtn ok" onclick="checkPwd()">ACCESS PORTAL</button>
+      <button class="pbtn cancel" onclick="closePwd()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEACHER PORTAL -->
+<div id="teacher-portal">
+  <div id="tp-header">
+    <h2>📖 TEACHER ANSWER KEY</h2>
+    <button class="tpbtn" onclick="closeTeacherPortal()">← EXIT PORTAL</button>
+  </div>
+  <div id="tp-body"></div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div id="review-modal">
+  <div id="rm-header">
+    <h2>📋 WRONG ANSWER REVIEW</h2>
+    <button class="tpbtn" onclick="closeReview()">← BACK TO GAME</button>
+  </div>
+  <div id="rm-body"><div style="color:#64748b;font-size:11px;padding:20px;text-align:center;">No wrong answers yet — keep playing!</div></div>
+</div>
+
+<!-- GAME WRAPPER -->
+<div id="game-wrapper" style="display:none;flex-direction:column;height:100%;width:100%;">
+  <div id="hud">
+    <div class="hi"><div class="hl">Points</div><div class="hv vp" id="h-pts">30</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">🔥 Streak</div><div class="hv vs" id="h-str">x0</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">Wave</div><div class="hv vw" id="h-wave">0</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">Base HP</div><div class="hv vh" id="h-hp">100</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">Enemies</div><div class="hv ve" id="h-enem">0</div></div>
+    <div class="hsep"></div>
+    <div id="xp-blk">
+      <div id="xp-lbl">LVL 1 · 0 / 100 XP</div>
+      <div id="xp-wrap"><div id="xp-bar" style="width:0%"></div></div>
+    </div>
+    <div id="htitle">⚡ HISTORY DEFENSE ⚡</div>
+  </div>
+  <div id="main-area">
+    <div id="canvas-wrap">
+      <canvas id="game-canvas"></canvas>
+      <div id="wave-announce"></div>
+      <div id="levelup-pop"></div>
+      <div id="toast"></div>
+    </div>
+    <div id="rp">
+      <div class="ptitle">Place Tower</div>
+      <div id="tower-btns"></div>
+
+      <div class="ptitle">Selected Tower</div>
+      <div id="sel-panel">
+        <div class="sr"><span id="sel-name" style="color:#7dd3fc;font-family:'Orbitron',sans-serif;font-size:9px;">—</span></div>
+        <div class="sr"><span>Damage</span><span id="sel-dmg">—</span></div>
+        <div class="sr"><span>Range</span><span id="sel-rng">—</span></div>
+        <div class="sr"><span>Fire Rate</span><span id="sel-spd">—</span></div>
+        <div class="sr"><span>Kills</span><span id="sel-kills">—</span></div>
+        <div class="sr"><span>Level</span><span id="sel-lvl">—</span></div>
+      </div>
+      <div id="upg-panel">
+        <div class="ur"><span>▲ Damage</span><span class="uc" id="uc-dmg"></span><button onclick="upg('damage')">BUY</button></div>
+        <div class="ur"><span>▲ Range</span><span class="uc" id="uc-rng"></span><button onclick="upg('range')">BUY</button></div>
+        <div class="ur"><span>▲ Speed</span><span class="uc" id="uc-spd"></span><button onclick="upg('speed')">BUY</button></div>
+      </div>
+      <button id="sell-btn" onclick="sellSel()">Sell Tower (50% refund)</button>
+
+      <div class="ptitle">Wave Gate</div>
+      <div id="wave-gate">
+        <div id="wg-label">Answer 10 questions to unlock wave</div>
+        <div id="wg-bar-wrap"><div id="wg-bar" style="width:0%"></div></div>
+        <div id="wg-dots"></div>
+      </div>
+
+      <div class="ptitle">Abilities</div>
+      <button class="abtn" onclick="ability('emp')"><span>⚡ EMP Blast</span><span class="a-cost">40p</span></button>
+      <button class="abtn" onclick="ability('heal')"><span>💚 Heal +20 HP</span><span class="a-cost">60p</span></button>
+      <button class="abtn" onclick="ability('nuke')"><span>🌀 Nuke Wave</span><span class="a-cost">80p</span></button>
+
+      <div style="margin-top:auto;display:flex;flex-direction:column;gap:4px;">
+        <div id="streak-hint">Next correct: +<span id="next-pts">5</span> pts</div>
+        <button id="quiz-btn" onclick="openQuiz()">📚 ANSWER QUESTION</button>
+        <button id="next-wave-btn" onclick="startWave()" disabled>▶ START WAVE</button>
+        <button id="pause-btn" onclick="togglePause()">⏸ PAUSE</button>
+        <button id="review-btn" onclick="openReview()">📋 Review Wrong Answers</button>
+      </div>
+    </div>
+  </div>
+  <div id="credits">Made with ❤️ by <span>Ren / Julian Hunter</span></div>
+</div>
+
+<!-- TITLE SCREEN -->
+<div class="overlay" id="title-screen" style="display:none;">
+  <div class="gtitle">HISTORY DEFENSE</div>
+  <div class="gsub">answer · earn · defend · level up</div>
+  <div class="instr">
+    <h3>HOW TO PLAY</h3>
+    • Answer <b style="color:#f59e0b">10 questions</b> to unlock each wave<br>
+    • Correct answers earn points — consecutive streak = bigger rewards<br>
+    • Place towers to stop enemies from reaching your base<br>
+    • Kill enemies → earn XP → level up → unlock 5 more tower types<br>
+    • Correct answers retire from the pool · Wrong ones can return<br><br>
+    <b style="color:#38bdf8">⚡ Laser</b> · <b style="color:#a78bfa">💥 Pulse</b> · <b style="color:#22d3ee">❄ Freeze</b> · <b style="color:#fbbf24">🌩 Tesla</b> · <b style="color:#f472b6">🎯 Sniper</b><br>
+    <b style="color:#fb923c">🚀 Missile</b> · <b style="color:#ef4444">🔥 Inferno</b> · <b style="color:#c084fc">🌀 Vortex</b>
+  </div>
+  <button class="bigbtn" onclick="startGame()">⚡ START GAME ⚡</button>
+</div>
+
+<!-- GAME OVER -->
+<div class="overlay" id="gameover-screen">
+  <div class="gtitle" style="color:#fb7185;-webkit-text-fill-color:#fb7185;text-shadow:0 0 18px #fb7185;">BASE BREACHED</div>
+  <div class="go-stats" id="go-stats"></div>
+  <div style="display:flex;gap:12px;">
+    <button class="bigbtn" onclick="restartGame()">↺ PLAY AGAIN</button>
+    <button class="bigbtn" style="background:rgba(127,29,29,.5);border-color:#7f1d1d;" onclick="openReviewFromGO()">📋 Review Mistakes</button>
+  </div>
+</div>
+
+<!-- QUIZ MODAL -->
+<div id="quiz-modal">
+  <div class="qbox">
+    <div class="q-unit-lbl" id="q-unit"></div>
+    <div class="stim-box" id="q-stim"></div>
+    <div class="q-streak-banner" id="q-banner"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="q-choices" id="q-choices"></div>
+    <div class="q-result" id="q-result">
+      <div class="qverdict" id="q-verdict"></div>
+      <div id="q-selected-section" class="result-section">
+        <div class="rs-label" id="q-sel-lbl" style="color:#fb7185;">Your Answer</div>
+        <div class="rs-text" id="q-sel-text"></div>
+        <div class="rs-text" id="q-sel-why" style="color:#64748b;font-size:9px;margin-top:4px;"></div>
+      </div>
+      <div id="q-correct-section" class="result-section" style="display:none;">
+        <div class="rs-label" style="color:#34d399;">✓ Correct Answer</div>
+        <div class="rs-text" id="q-correct-text" style="color:#86efac;"></div>
+        <div class="rs-text" id="q-correct-why" style="color:#7dd3fc;font-size:9px;margin-top:4px;"></div>
+      </div>
+    </div>
+    <button class="qcont" id="q-cont" onclick="closeQuiz()">CONTINUE →</button>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// QUESTIONS — EOC Stimulus-Based Format
+// =====================================================================
+const Q=[
+{
+  unit:"Unit 1: Colonial America",
+  stimulus:{type:"graph",label:"📊 COLONIAL TRADE DIAGRAM (c. 1750)",content:"COLONIES ──────────────────────→ BRITAIN\n  Raw Materials: tobacco, timber, furs, indigo\n\nBRITAIN ──────────────────────→ COLONIES\n  Finished Goods: cloth, tools, furniture\n\nBritain maintained a trade surplus — buying cheap,\nselling expensive — under the mercantilist system.",source:"Colonial Trade System, 18th Century"},
+  question:"Based on the trade diagram above, the British benefited from their mercantilist relationship with the American colonies primarily by",
+  choices:["Buying raw materials from the colonies and selling them finished products","Prohibiting colonists from fishing and fur trading","Supporting the growth of various colonial industries","Taking large amounts of gold and silver from the southern colonies"],
+  answer:"Buying raw materials from the colonies and selling them finished products",
+  explanation:"The diagram shows Britain receiving raw materials and exporting finished goods back — creating a trade surplus that enriched Britain. This is the core of mercantilism.",
+  distractors:{
+    "Prohibiting colonists from fishing and fur trading":"Britain actually encouraged these colonial industries because they produced raw materials. Mercantilist policy restricted colonial manufacturing, not resource collection.",
+    "Supporting the growth of various colonial industries":"Mercantilism suppressed colonial manufacturing to prevent competition with British industry. Britain wanted colonies as raw material suppliers, not industrial rivals.",
+    "Taking large amounts of gold and silver from the southern colonies":"The American colonies had very little gold or silver. Britain's wealth came from the trade imbalance shown in the diagram — not precious metal extraction."
+  }
+},
+{
+  unit:"Unit 1: Colonial America",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE QUOTE",content:'"The flourishing state of the colonies is in our interest... leave them to themselves, and they improve. Meddle too much, and we risk everything we have built across the Atlantic."',source:"— Robert Walpole, British Prime Minister (attributed), c. 1721–1742"},
+  question:"Based on the quote above, one reason traditions of self-government developed in the American colonies during the colonial era was that the British",
+  choices:["Maintained a strong military presence in the colonies","Practiced salutary neglect in the colonies","Required colonial representation in Parliament","Sent effective leaders to govern colonial settlements"],
+  answer:"Practiced salutary neglect in the colonies",
+  explanation:"Walpole's policy of not interfering — salutary neglect — allowed colonial assemblies to develop and govern themselves, building a tradition of self-rule.",
+  distractors:{
+    "Maintained a strong military presence in the colonies":"A strong British military presence would have suppressed colonial independence, not encouraged it. The colonies thrived precisely because Britain left them largely unmonitored.",
+    "Required colonial representation in Parliament":"Colonists actually had NO representation in Parliament — this was their primary grievance ('no taxation without representation'). Britain never granted them seats.",
+    "Sent effective leaders to govern colonial settlements":"Strong governors sent from Britain would have limited self-government. Self-governance grew specifically because oversight was weak and distant."
+  }
+},
+{
+  unit:"Unit 1: Colonial America",
+  stimulus:{type:"map",label:"🗺 MAP — COLONIAL REGIONS (c. 1750)",content:"┌────────────────────────────────┐\n│  NEW ENGLAND  ❄️  Cold/Harbors │\n│  → Fishing · Shipping · Lumber │\n├────────────────────────────────┤\n│  MIDDLE  🌾  Mild/Fertile      │\n│  → Grains · Trade · Diverse   │\n├────────────────────────────────┤\n│  SOUTHERN  🌞  Warm/Flat       │\n│  → Tobacco · Rice · Plantations│\n└────────────────────────────────┘",source:"Colonial Economic Geography, 18th Century"},
+  question:"Based on the map above, which correctly identifies the regions where plantations developed, where shipping dominated, and where a blend of both occurred?",
+  choices:["New England, Middle, Southern","Middle, Southern, New England","Southern, New England, Middle","Southern, Middle, New England"],
+  answer:"Southern, New England, Middle",
+  explanation:"The map shows Southern colonies with warm climate → plantations; New England with cold harbors → fishing and shipping; Middle colonies blending both with fertile land and trade access.",
+  distractors:{
+    "New England, Middle, Southern":"New England's cold climate and rocky soil made plantations impossible. This order incorrectly assigns plantation culture to the northernmost colonies.",
+    "Middle, Southern, New England":"The Middle colonies did not develop the most extreme plantation system — that was the South. This answer misidentifies all three regions.",
+    "Southern, Middle, New England":"The Middle colonies, not New England, were the blend. New England specialized in fishing and shipping, while the Middle colonies had both farming and trade."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — Thomas Paine, 1776",content:'"Society in every state is a blessing, but Government, even in its best state, is but a necessary evil... We have it in our power to begin the world over again. A situation, similar to the present, hath not happened since the days of Noah."',source:"— Thomas Paine, Common Sense, January 10, 1776"},
+  question:"Based on the excerpt from Common Sense above, the main reason Thomas Paine wrote this pamphlet was to",
+  choices:["urge adoption of the Virginia Plan of Union","gain support for declaring independence from Great Britain","bring an end to the Revolutionary War","convince states to ratify the new Constitution"],
+  answer:"gain support for declaring independence from Great Britain",
+  explanation:"Paine argues that government is 'a necessary evil' and that America has the power to 'begin the world over again' — directly challenging loyalty to Britain and urging independence.",
+  distractors:{
+    "urge adoption of the Virginia Plan of Union":"The Virginia Plan was a proposal at the Constitutional Convention of 1787 — eleven years after Common Sense. Paine wrote in 1776 before independence was declared.",
+    "bring an end to the Revolutionary War":"Common Sense was published in January 1776, before independence was declared and before large-scale fighting began. Its goal was to start the revolution, not end it.",
+    "convince states to ratify the new Constitution":"The Constitution wasn't drafted until 1787. Paine's goal in 1776 was to convince colonists to break from Britain entirely, not to ratify any document."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — George Mason, 1787",content:'"There is no Declaration of Rights... The laws of the general government being paramount to the laws and constitutions of the several States, the Declarations of Rights in the separate States are no security. The people will have no security for their rights and liberties."',source:"— George Mason, Objections to the Constitution, September 1787"},
+  question:"Based on Mason's quote above, Antifederalists insisted that a Bill of Rights be added to the Constitution in order to",
+  choices:["grant more power to Congress to regulate trade","provide a method of settling disputes between states","prevent states from denying individuals the right to vote","protect individual rights from the power of the central government"],
+  answer:"protect individual rights from the power of the central government",
+  explanation:"Mason explicitly states the people will have 'no security for their rights and liberties' without a declaration of rights limiting federal power — the core Antifederalist concern.",
+  distractors:{
+    "grant more power to Congress to regulate trade":"Antifederalists wanted LESS federal power, not more. They opposed the Constitution precisely because it gave too much power to the central government.",
+    "provide a method of settling disputes between states":"This function was addressed through the federal court system. The Bill of Rights was specifically about protecting individual civil liberties from government overreach.",
+    "prevent states from denying individuals the right to vote":"Voting rights were not the primary focus of the Bill of Rights debate. Mason's concern was broader civil liberties — speech, religion, due process."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"cartoon",label:"🖼 POLITICAL CARTOON — Philadelphia, 1787",content:"The cartoon depicts a large balance scale at the Constitutional Convention.\n\nLeft pan (labeled 'LARGE STATES / VIRGINIA PLAN'):\n  → Population-based representation\n  → Favors large, populous states\n\nRight pan (labeled 'SMALL STATES / NEW JERSEY PLAN'):\n  → Equal state representation\n  → Favors small states\n\nA figure in the center (Roger Sherman of Connecticut)\nholds the scale steady, pointing to TWO separate chambers.",source:"Political cartoon illustrating the Connecticut Compromise, 1787"},
+  question:"Based on the political cartoon above, what was the result of the Great Compromise at the Constitutional Convention of 1787?",
+  choices:["creating a two-house (bicameral) legislature to make laws","banning slavery in Southern states south of the Ohio River","requiring that the president have a cabinet of at least four members","giving the Supreme Court the power to hear cases involving states"],
+  answer:"creating a two-house (bicameral) legislature to make laws",
+  explanation:"The cartoon shows Sherman balancing both plans by splitting into two chambers — a Senate (equal state representation) and a House (population-based), creating the bicameral Congress.",
+  distractors:{
+    "banning slavery in Southern states south of the Ohio River":"The Great Compromise didn't address slavery directly. Slavery was addressed separately through the Three-Fifths Compromise and the 20-year protection of the slave trade.",
+    "requiring that the president have a cabinet of at least four members":"Cabinet requirements were never specified in the Constitution. The cabinet developed through precedent, beginning with Washington's choices.",
+    "giving the Supreme Court the power to hear cases involving states":"Judicial review was established by Marbury v. Madison (1803), not by the Great Compromise. The cartoon shows the legislative branch, not the judiciary."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — U.S. Constitution, 1787",content:'"Representatives and direct Taxes shall be apportioned among the several States... by adding to the whole Number of free Persons... three fifths of all other Persons."',source:"— U.S. Constitution, Article I, Section 2, Clause 3, 1787"},
+  question:"Based on the constitutional excerpt above, what was one effect of the Three-Fifths Compromise?",
+  choices:["Slave states gained additional congressional representation.","The number of justices on the Supreme Court was established.","Presidential appointments were assured easy confirmation.","A two-house (bicameral) legislature was created."],
+  answer:"Slave states gained additional congressional representation.",
+  explanation:"By counting enslaved people as 3/5 of a person for apportionment purposes, slave states received more House seats than they would have with only free persons counted.",
+  distractors:{
+    "The number of justices on the Supreme Court was established.":"The Constitution left the number of justices to Congress, not the Three-Fifths Compromise. Court size changed several times before settling at nine.",
+    "Presidential appointments were assured easy confirmation.":"Senate confirmation of appointments was established elsewhere in Article II. The Three-Fifths Compromise was only about representation and direct taxation.",
+    "A two-house (bicameral) legislature was created.":"A bicameral legislature was the outcome of the Great Compromise (Connecticut Compromise), not the Three-Fifths Compromise, which was about counting enslaved people."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"map",label:"🗺 MAP — North America After French & Indian War (1763)",content:"  BRITISH TERRITORY\n  ┌──────────────────────────────────┐\n  │ 13 Colonies │  PROCLAMATION    │\n  │ (E. Coast)  │  LINE OF 1763    │\n  │             │  (Appalachian    │\n  │  ←SETTLED   │   Mountains)     │\n  │             │  ← NO SETTLEMENT│\n  │             │  Native American │\n  │             │  Territory       │\n  └──────────────────────────────────┘",source:"Map of the Proclamation Line of 1763, restricting westward expansion"},
+  question:"Based on the map above, the Proclamation of 1763 was issued by Great Britain after the French and Indian War primarily to",
+  choices:["promote colonial settlement beyond the Appalachian Mountains","limit conflict between Native American Indians and colonial settlers","encourage colonial economic ties with France","force French settlers to leave British territory"],
+  answer:"limit conflict between Native American Indians and colonial settlers",
+  explanation:"The map shows settlement blocked west of the Appalachians — this was to reduce costly conflicts with Native Americans who had allied with France during the war.",
+  distractors:{
+    "promote colonial settlement beyond the Appalachian Mountains":"The Proclamation did the exact opposite — it PROHIBITED settlement west of the Appalachians. The line on the map is a restriction, not an invitation.",
+    "encourage colonial economic ties with France":"Britain had just defeated France in the French and Indian War (1754–1763). Encouraging trade with France would have been politically impossible and economically counterproductive.",
+    "force French settlers to leave British territory":"The Proclamation addressed westward expansion by colonists, not the status of French settlers. Many French inhabitants in formerly French territories were allowed to remain."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"image",label:"🖼 HISTORICAL IMAGE — Surrender at Saratoga, October 17, 1777",content:"The painting 'Surrender of General Burgoyne' by John Trumbull depicts:\n\n→ British General John Burgoyne surrendering his sword to\n  American General Horatio Gates\n→ American troops standing in formal formation\n→ French military observers visible in the background\n→ Over 6,000 British troops laid down their arms\n\nThis moment became the turning point of the Revolutionary War.",source:"John Trumbull, 'Surrender of General Burgoyne at Saratoga,' 1822"},
+  question:"Based on the historical image above, the key significance of the Battle of Saratoga was that it",
+  choices:["Forced Britain to immediately seek peace","Began a successful colonial invasion of Canada","Encouraged the French to formally ally with the colonies","Cleared the British out of North America completely"],
+  answer:"Encouraged the French to formally ally with the colonies",
+  explanation:"French observers in the painting represent France's growing interest. The American victory proved to France that the colonists could win — leading to the formal French alliance in 1778.",
+  distractors:{
+    "Forced Britain to immediately seek peace":"Britain continued fighting for four more years after Saratoga. The war didn't end until Yorktown (1781) and the Treaty of Paris (1783). Saratoga was a turning point, not the end.",
+    "Began a successful colonial invasion of Canada":"The American attempt to invade Canada occurred in 1775–1776 and failed badly. No successful invasion of Canada took place during the Revolution.",
+    "Cleared the British out of North America completely":"British forces remained in New York City and other locations throughout the war. They didn't evacuate until after the Treaty of Paris in 1783."
+  }
+},
+{
+  unit:"Unit 2: The American Revolution & Constitution",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — George Washington, 1778",content:'"The Baron von Steuben has rendered our army a very essential service... He has been indefatigable in his exertions to discipline and train the troops, and has been the means of introducing a system which, I believe, will prove of incalculable advantage."',source:"— General George Washington, letter to Congress regarding Baron von Steuben, Valley Forge, 1778"},
+  question:"Based on Washington's quote above, which statement BEST describes the contribution of Baron von Steuben to the Continental Army?",
+  choices:["He suggested Washington take the guns from Ft. Ticonderoga in order to use at Boston.","He taught drill and military tactics at Valley Forge and wrote a training manual.","He helped Washington secure the French Alliance at the American victory at Saratoga.","He ordered American troops to surround Cornwallis at Yorktown."],
+  answer:"He taught drill and military tactics at Valley Forge and wrote a training manual.",
+  explanation:"Washington praises von Steuben for 'discipline and training' and introducing a 'system' — this refers to his drilling program and the Regulations for the Order and Discipline of the Troops of the United States.",
+  distractors:{
+    "He suggested Washington take the guns from Ft. Ticonderoga in order to use at Boston.":"This was Henry Knox's achievement in 1775–76, when he transported artillery 300 miles from Fort Ticonderoga. Von Steuben arrived in America in 1778.",
+    "He helped Washington secure the French Alliance at the American victory at Saratoga.":"The French Alliance was secured through Benjamin Franklin's diplomacy in Paris. Saratoga was the military catalyst. Von Steuben played no role in these negotiations.",
+    "He ordered American troops to surround Cornwallis at Yorktown.":"The strategy at Yorktown was planned by Washington with French General Rochambeau. While von Steuben commanded a division there, he didn't order the overall encirclement."
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — President Madison, 1812",content:'"British cruisers have been in the continued practice of violating the American flag... impressed American citizens into the British fleet... our commerce has been plundered in every sea... Native tribes on our frontier have been kindled into hostility by the British."',source:"— President James Madison, War Message to Congress, June 1, 1812"},
+  question:"Based on Madison's war message above, the U.S. declared war on Great Britain in 1812 for all of the following reasons EXCEPT",
+  choices:["British troops had occupied the Mississippi River delta south of New Orleans","The British navy was seizing American merchant ships and confiscating their cargoes","The British were supplying weapons to Native American tribes in the Northwest","The British navy was impressing American sailors into its service against their will"],
+  answer:"British troops had occupied the Mississippi River delta south of New Orleans",
+  explanation:"Madison's message mentions impressment, plundered commerce, and British support of Native tribes — but not occupation of New Orleans. That British troops held the delta was not a stated cause of the war.",
+  distractors:{
+    "The British navy was seizing American merchant ships and confiscating their cargoes":"Madison explicitly says 'our commerce has been plundered in every sea.' This WAS a primary cause of the war and is directly in the quote.",
+    "The British were supplying weapons to Native American tribes in the Northwest":"Madison mentions 'Native tribes on our frontier have been kindled into hostility by the British.' British support for Tecumseh's Confederation was a key grievance.",
+    "The British navy was impressing American sailors into its service against their will":"Impressment — forcing American sailors into British service — was perhaps THE most inflammatory cause. Madison calls it a 'violation of the American flag.'"
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"map",label:"🗺 MAP — The Erie Canal Route (1825)",content:"  LAKE ERIE                 ATLANTIC OCEAN\n  [Buffalo] ←──────────────────→ [New York City]\n             Erie Canal (363 mi)    Hudson River\n             ↓ opened 1825\n  Shipping cost:  $100/ton  →  $9/ton  (−91%)\n  Travel time:    3 weeks   →  8 days\n\n  GREAT LAKES REGION grain now reached\n  eastern markets cheaply and quickly.",source:"Erie Canal Map, 1825 — DeWitt Clinton's 'Big Ditch'"},
+  question:"Based on the map above, the Erie Canal was instrumental in developing trade because",
+  choices:["The Ohio River Valley now had an outlet to the Mississippi River","Western states could be financially linked and connected to the east","New York City and New Jersey could trade easier without navigating the Hudson River","The Mississippi and Missouri rivers could interconnect all parts of the nation"],
+  answer:"Western states could be financially linked and connected to the east",
+  explanation:"The map shows the Canal connecting Buffalo (Great Lakes/West) directly to New York City (East coast), dropping shipping costs 91% — financially linking western producers to eastern markets.",
+  distractors:{
+    "The Ohio River Valley now had an outlet to the Mississippi River":"The Erie Canal ran from Lake Erie to the Hudson River, connecting to New York City — not to the Ohio River Valley or the Mississippi River system.",
+    "New York City and New Jersey could trade easier without navigating the Hudson River":"The Erie Canal actually USED the Hudson River as part of its route. The canal reduced costs for westward trade, not local New York-New Jersey commerce.",
+    "The Mississippi and Missouri rivers could interconnect all parts of the nation":"These were entirely separate river systems. The Erie Canal connected the Great Lakes to the Atlantic seaboard through New York, far north of the Mississippi system."
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — Senator Henry Clay, 1824",content:'"Let us bind the Republic together with a perfect system of roads and canals. Let us protect the manufactures of our country... Let us maintain the national bank... These measures, adopted together, will make of this nation a self-sufficient, prosperous, and united whole."',source:"— Henry Clay, speech proposing the American System, U.S. Senate, 1824"},
+  question:"Based on Clay's quote above, Henry Clay's American System was designed to",
+  choices:["Defeat the British in the War of 1812","Improve the nation's economy and infrastructure following the War of 1812","Find a water route to the Pacific Ocean to improve commerce","Provide guidelines for the admittance of new states to the Union"],
+  answer:"Improve the nation's economy and infrastructure following the War of 1812",
+  explanation:"Clay explicitly calls for roads, canals, manufacturing protection, and a national bank — all economic and infrastructure improvements to make America 'self-sufficient' after the war exposed national weaknesses.",
+  distractors:{
+    "Defeat the British in the War of 1812":"Clay's speech was delivered in 1824 — more than a decade after the War of 1812 ended in 1815. The American System was a postwar economic recovery plan, not a military strategy.",
+    "Find a water route to the Pacific Ocean to improve commerce":"This describes the goal of the Lewis and Clark Expedition (1804–1806). Clay's plan focused on internal improvements — canals and roads within existing U.S. territory.",
+    "Provide guidelines for the admittance of new states to the Union":"Statehood procedures were established by the Northwest Ordinance of 1787. Clay's System addressed economics and infrastructure, not territorial expansion or statehood processes."
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — Elizabeth Cady Stanton, 1848",content:'"We hold these truths to be self-evident: that all men and women are created equal; that they are endowed by their Creator with certain inalienable rights; that among these are life, liberty, and the pursuit of happiness."',source:"— Elizabeth Cady Stanton, Declaration of Sentiments, Seneca Falls Convention, July 19–20, 1848"},
+  question:"Based on the excerpt above, the Declaration of Sentiments adopted at the Seneca Falls Convention in 1848 was significant because it",
+  choices:["Promoted the idea of equal rights for women","Demanded the immediate abolition of slavery","Called for the prohibition of alcoholic beverages","Asked government to restrict harmful business practices"],
+  answer:"Promoted the idea of equal rights for women",
+  explanation:"Stanton deliberately mirrors the Declaration of Independence but adds 'and women' — arguing women are equal to men and deserve the same inalienable rights, launching the women's rights movement.",
+  distractors:{
+    "Demanded the immediate abolition of slavery":"While many women's rights advocates like Stanton also supported abolition, the Declaration of Sentiments focused specifically on women's equality. Slavery abolition was a separate movement.",
+    "Called for the prohibition of alcoholic beverages":"The temperance/prohibition movement was a separate 19th-century reform. The Seneca Falls Convention was specifically about women's rights, not alcohol regulation.",
+    "Asked government to restrict harmful business practices":"Regulating business practices was a Progressive Era goal of the 1890s–1910s — nearly 50 years after Seneca Falls. Stanton's concern was gender equality, not corporate reform."
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — President Jefferson, 1803",content:'"The acquisition of Louisiana... is fertile in its soil, favorable in its climate... The territory acquired, as it may in time be peopled, will add indefinitely to the resources of the Union... I have done what I believed my duty required."',source:"— Thomas Jefferson, letter to John Breckinridge, August 12, 1803"},
+  question:"Jefferson's purchase of Louisiana can BEST be described as an expansion of presidential power because",
+  choices:["The Supreme Court declared the purchase unconstitutional but Jefferson ignored the ruling.","He negotiated directly with France, the first time an American president held formal talks with a foreign nation.","The Constitution limited the land he was eligible to purchase, so he convinced Congress to amend it.","Since there was no provision for the President to buy land, Jefferson had to use a very loose interpretation of the Constitution."],
+  answer:"Since there was no provision for the President to buy land, Jefferson had to use a very loose interpretation of the Constitution.",
+  explanation:"Jefferson himself struggled with this — he had long argued for strict constitutional interpretation, yet he used an implied executive power to complete the $15 million purchase, expanding the precedent for presidential authority.",
+  distractors:{
+    "The Supreme Court declared the purchase unconstitutional but Jefferson ignored the ruling.":"The Supreme Court never ruled on the Louisiana Purchase. No significant legal challenge reached the courts, and Jefferson received Senate ratification for the treaty.",
+    "He negotiated directly with France, the first time an American president held formal talks with a foreign nation.":"American leaders had negotiated with foreign nations since independence — this was not historically novel. Washington, Adams, and Jefferson all engaged in diplomacy.",
+    "The Constitution limited the land he was eligible to purchase, so he convinced Congress to amend it.":"No such provision existed. The constitutional issue was the complete absence of any presidential land-purchase power, which Jefferson addressed through broad interpretation."
+  }
+},
+{
+  unit:"Unit 3: The New Republic through Jacksonian Democracy",
+  stimulus:{type:"quote",label:"💬 PRIMARY SOURCE — Virginia Resolutions, 1798",content:'"The General Assembly of Virginia doth expressly protest... The Sedition Act exercises a power not delegated by the Constitution, and which more than any other ought to produce universal alarm, because it is levelled against the right of freely examining public characters and measures — a right which has ever been justly deemed the only effectual guardian of every other right."',source:"— Virginia Resolutions, authored by James Madison, December 21, 1798"},
+  question:"Based on the Virginia Resolutions above, which statement correctly identifies the argument critics made against the Alien and Sedition Acts of 1798?",
+  choices:["The Acts violated the right of citizens to expand the country west over the Proclamation Line of 1763.","The Acts violated the rights of the Southern population by limiting trade through tariffs.","The Acts violated citizens' civil liberties by limiting their 1st Amendment right to free speech.","The Acts violated the rights of former slaves to vote which were gained via the 15th Amendment."],
+  answer:"The Acts violated citizens' civil liberties by limiting their 1st Amendment right to free speech.",
+  explanation:"Madison's resolution explicitly states the Sedition Act attacks 'the right of freely examining public characters and measures' — directly describing the suppression of free speech and press guaranteed by the First Amendment.",
+  distractors:{
+    "The Acts violated the right of citizens to expand the country west over the Proclamation Line of 1763.":"The Proclamation Line was a 1763 British colonial policy — irrelevant to a 1798 American law about speech. The two issues are separated by 35 years and an entire revolution.",
+    "The Acts violated the rights of the Southern population by limiting trade through tariffs.":"The Alien and Sedition Acts restricted immigration and criminalized criticism of the government. They had nothing to do with trade tariffs or Southern economic interests.",
+    "The Acts violated the rights of former slaves to vote which were gained via the 15th Amendment.":"The 15th Amendment was ratified in 1870 — 72 years after the Alien and Sedition Acts. Enslaved people had no voting rights in 1798, and this was not the issue Madison raised."
+  }
+}
+];
+
+// =====================================================================
+// TOWER DEFINITIONS — Each has distinct stats
+// =====================================================================
+const TD={
+  laser: {name:'Laser Tower',  emoji:'⚡',color:'#38bdf8',glow:'#38bdf8',cost:50, dmg:12,  rng:115, spd:2.2,  bspd:13, unlockLvl:1,ptype:'laser', upgDmg:10,upgRng:12,upgSpd:.35,desc:'12 dmg · 115 rng · 2.2/s'},
+  pulse: {name:'Pulse Cannon', emoji:'💥',color:'#a78bfa',glow:'#a78bfa',cost:75, dmg:60,  rng:80,  spd:0.38, bspd:5,  aoe:48, unlockLvl:1,ptype:'pulse', upgDmg:25,upgRng:10,upgSpd:.12,desc:'60 dmg · 80 rng · 0.4/s AOE'},
+  freeze:{name:'Freeze Tower', emoji:'❄️',color:'#22d3ee',glow:'#22d3ee',cost:60, dmg:5,   rng:140, spd:0.85, bspd:7,  slow:.38,unlockLvl:1,ptype:'freeze',upgDmg:4, upgRng:16,upgSpd:.22,desc:'5 dmg · 140 rng · slows'},
+  tesla: {name:'Tesla Tower',  emoji:'🌩',color:'#fbbf24',glow:'#fbbf24',cost:90, dmg:22,  rng:145, spd:1.1,  bspd:0,  chains:3,unlockLvl:2,ptype:'chain', upgDmg:14,upgRng:18,upgSpd:.25,desc:'22 dmg · 145 rng · chains 3'},
+  sniper:{name:'Sniper Tower', emoji:'🎯',color:'#f472b6',glow:'#f472b6',cost:100,dmg:110, rng:315, spd:0.28, bspd:24, unlockLvl:3,ptype:'sniper',upgDmg:55,upgRng:40,upgSpd:.1, desc:'110 dmg · 315 rng · 0.3/s'},
+  missile:{name:'Missile Tower',emoji:'🚀',color:'#fb923c',glow:'#fb923c',cost:120,dmg:72, rng:150, spd:0.52, bspd:4,  aoe:62, unlockLvl:4,ptype:'missile',upgDmg:38,upgRng:20,upgSpd:.14,desc:'72 dmg · 150 rng · AOE 62'},
+  inferno:{name:'Inferno Tower',emoji:'🔥',color:'#ef4444',glow:'#ef4444',cost:140,dmg:9,  rng:68,  spd:4.5,  bspd:6,  dot:.9, unlockLvl:5,ptype:'fire',  upgDmg:7, upgRng:10,upgSpd:.6, desc:'9 dmg · 68 rng · 4.5/s DOT'},
+  vortex:{name:'Vortex Tower', emoji:'🌀',color:'#c084fc',glow:'#c084fc',cost:160,dmg:24,  rng:178, spd:0.62, bspd:5,  aoe:52,pull:.38,unlockLvl:6,ptype:'vortex',upgDmg:14,upgRng:22,upgSpd:.14,desc:'24 dmg · 178 rng · pull'}
+};
+
+// =====================================================================
+// ENEMY DEFINITIONS
+// =====================================================================
+const ED={
+  basic: {name:'Drone',    hp:50,  spd:.7,  xp:10, pts:2,  size:10,color:'#fb7185',shape:'hex',   minWave:1},
+  fast:  {name:'Speeder',  hp:35,  spd:1.25,xp:15, pts:3,  size:8, color:'#fbbf24',shape:'diamond',minWave:3},
+  tank:  {name:'Titan',    hp:220, spd:.32, xp:30, pts:5,  size:16,color:'#818cf8',shape:'octagon',minWave:5},
+  elite: {name:'Phantom',  hp:115, spd:.78, xp:25, pts:4,  size:12,color:'#f472b6',shape:'star',   minWave:7},
+  boss:  {name:'OVERLORD', hp:650, spd:.26, xp:100,pts:15, size:22,color:'#f97316',shape:'boss',   minWave:9}
+};
+
+const XP_THRESH=[0,100,260,500,840,1300,1900];
+
+// =====================================================================
+// GAME STATE
+// =====================================================================
+let S={};
+function initS(){
+  S={
+    screen:'game',
+    pts:30,wave:0,baseHp:100,maxHp:100,
+    paused:false,waveActive:false,
+    enemies:[],towers:[],projectiles:[],particles:[],dmgNums:[],
+    selType:null,selTower:null,hoverCell:null,
+    streak:0,
+    kills:0,qAnswered:0,qCorrect:0,
+    playerLvl:1,playerXP:0,
+    lastTime:0,
+    spawnQueue:[],spawnTimer:0,
+    eid:0,pid:0,
+    bgStars:genStars(),
+    sflash:0,sflashColor:'#fff',
+    empActive:0,
+    // Question tracking
+    masteredSet:new Set(),   // indices answered correctly (won't reappear)
+    wrongList:[],            // {idx, selected, q} for review
+    qDeck:[],qDeckPos:0,curQIdx:null,
+    // Wave gate
+    waveQCount:0,    // questions answered this wave cycle
+    waveQRequired:10 // need 10 to unlock wave
+  };
+  rebuildDeck();
+}
+
+// =====================================================================
+// CANVAS & RESIZE
+// =====================================================================
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+let CW=800,CH=548,CELL=40,COLS=20,ROWS=13;
+let PATH_PTS=[];
+const PATH_GRID=[
+  {col:-1,row:2},{col:8,row:2},{col:8,row:6},
+  {col:3,row:6},{col:3,row:10},{col:14,row:10},
+  {col:14,row:6},{col:18,row:6},{col:18,row:10},
+  {col:21,row:10}
+];
+let PATH_CELLS=new Set();
+
+function resizeGame(){
+  const wrap=document.getElementById('canvas-wrap');
+  CW=wrap.clientWidth;CH=wrap.clientHeight;
+  canvas.width=CW;canvas.height=CH;
+  CELL=Math.floor(Math.min(CW/COLS,CH/ROWS));
+  PATH_PTS=PATH_GRID.map(p=>({x:p.col*CELL+CELL/2,y:p.row*CELL+CELL/2}));
+  rebuildPathCells();
+}
+function rebuildPathCells(){
+  PATH_CELLS.clear();
+  for(let s=0;s<PATH_PTS.length-1;s++){
+    const a=PATH_PTS[s],b=PATH_PTS[s+1];
+    if(Math.abs(a.x-b.x)<1){
+      const col=Math.round(a.x/CELL-.5);
+      const r1=Math.floor(Math.min(a.y,b.y)/CELL),r2=Math.ceil(Math.max(a.y,b.y)/CELL);
+      for(let r=r1;r<=r2;r++) PATH_CELLS.add(col+','+r);
+    } else {
+      const row=Math.round(a.y/CELL-.5);
+      const c1=Math.floor(Math.min(a.x,b.x)/CELL),c2=Math.ceil(Math.max(a.x,b.x)/CELL);
+      for(let c=c1;c<=c2;c++) PATH_CELLS.add(c+','+row);
+    }
+  }
+}
+function isPath(c,r){return PATH_CELLS.has(c+','+r);}
+function isBuildable(c,r){
+  if(c<0||c>=COLS||r<0||r>=ROWS) return false;
+  if(isPath(c,r)) return false;
+  return !S.towers.some(t=>t.col===c&&t.row===r);
+}
+window.addEventListener('resize',resizeGame);
+
+// =====================================================================
+// TOWER BUTTON RENDERING
+// =====================================================================
+function renderTowerBtns(){
+  const ct=document.getElementById('tower-btns');
+  ct.innerHTML='';
+  Object.entries(TD).forEach(([type,def])=>{
+    const unlocked=S.playerLvl>=def.unlockLvl;
+    const sel=S.selType===type;
+    const btn=document.createElement('button');
+    btn.className='tbtn'+(sel?' sel-t':'')+(unlocked?'':' locked');
+    btn.id='tb-'+type;
+    btn.innerHTML=`<div class="tico" style="background:${def.color}18;border:1px solid ${def.color}60">${def.emoji}</div>
+    <div class="tinfo"><div class="tname" style="color:${def.color}">${def.name}</div>
+    <div class="tsub">${def.cost}p · ${def.desc}</div></div>
+    ${!unlocked?`<span class="tbadge">🔒Lv${def.unlockLvl}</span>`:''}`;
+    if(unlocked) btn.onclick=()=>selTowerType(type);
+    ct.appendChild(btn);
+  });
+}
+
+// =====================================================================
+// ENEMY SYSTEM
+// =====================================================================
+function spawnEnemy(type){
+  const def=ED[type]||ED.basic;
+  const lm=1+Math.max(0,(S.playerLvl-1)*.1);
+  const hp=def.hp*lm*(1+S.wave*.1);
+  S.enemies.push({
+    id:S.eid++,type,def,
+    x:PATH_PTS[0].x,y:PATH_PTS[0].y,
+    wpIdx:1,hp,maxHp:hp,
+    spd:def.spd*(1+Math.max(0,(S.playerLvl-1)*.03)),
+    baseSpd:def.spd,slow:1,slowTimer:0,
+    size:def.size,color:def.color,
+    reward:def.pts,xpReward:def.xp,
+    hitFlash:0,dead:false,dist:0,angle:0,
+    burnTimer:0,burnDmg:0,t:0
+  });
+}
+function buildWaveQ(wn){
+  const q=[];const n=8+wn*2;
+  const weights={basic:.5,fast:.25,tank:.12,elite:.08,boss:.05};
+  const avail=Object.entries(ED).filter(([k,d])=>d.minWave<=wn).map(([k])=>k);
+  for(let i=0;i<n;i++){
+    let type='basic',r=Math.random(),cum=0;
+    for(const t of avail){cum+=(weights[t]||0);if(r<cum){type=t;break;}}
+    q.push(type);
+  }
+  return q;
+}
+function moveEnemy(e,dt){
+  if(e.wpIdx>=PATH_PTS.length){S.baseHp=Math.max(0,S.baseHp-Math.ceil(e.def.hp*.04+5));sflash('#fb7185');e.dead=true;return;}
+  const tg=PATH_PTS[e.wpIdx];
+  const dx=tg.x-e.x,dy=tg.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
+  const sm=e.slowTimer>0?e.slow:1;
+  e.angle=Math.atan2(dy,dx);
+  const sp=e.spd*sm;
+  if(dist<sp*dt*60+1){e.x=tg.x;e.y=tg.y;e.wpIdx++;}
+  else{e.x+=dx/dist*sp*dt*60;e.y+=dy/dist*sp*dt*60;}
+  e.dist+=sp*dt*60;
+  if(e.slowTimer>0) e.slowTimer-=dt;
+  if(e.hitFlash>0) e.hitFlash-=dt;
+  e.t+=dt;
+  if(e.burnTimer>0){e.burnTimer-=dt;e.hp-=e.burnDmg*dt;spawnPt(e.x,e.y,'#ef4444',1,4,1.5);if(e.hp<=0&&!e.dead)killEnemy(e,null);}
+}
+function killEnemy(e,tower){
+  e.dead=true;S.pts+=e.reward;
+  if(tower) tower.kills++;
+  S.kills++;addXP(e.xpReward);spawnDeathPts(e.x,e.y,e.color);updateHUD();
+}
+
+// =====================================================================
+// TOWER SYSTEM
+// =====================================================================
+function mkTower(type,col,row){
+  const def=TD[type];
+  return {type,col,row,x:col*CELL+CELL/2,y:row*CELL+CELL/2,
+    dmg:def.dmg,rng:def.rng,spd:def.spd,
+    cool:0,kills:0,lvl:1,upgs:{damage:0,range:0,speed:0},
+    pulseAnim:0,angle:0,laserAnim:0,
+    chainTargets:[],chainLife:0,orbitAngle:0};
+}
+function towerShoot(t,dt){
+  t.cool-=dt;t.orbitAngle+=dt*1.5;
+  if(t.pulseAnim>0) t.pulseAnim=Math.max(0,t.pulseAnim-dt);
+  if(t.laserAnim>0) t.laserAnim=Math.max(0,t.laserAnim-dt);
+  if(t.chainLife>0) t.chainLife=Math.max(0,t.chainLife-dt);
+  if(t.cool>0) return;
+  const def=TD[t.type];
+  let tgt=null,bestD=-1;
+  for(const e of S.enemies){
+    if(e.dead) continue;
+    const dx=e.x-t.x,dy=e.y-t.y;
+    if(Math.sqrt(dx*dx+dy*dy)<=t.rng&&e.dist>bestD){bestD=e.dist;tgt=e;}
+  }
+  if(!tgt) return;
+  t.cool=1/t.spd;
+  t.angle=Math.atan2(tgt.y-t.y,tgt.x-t.x);
+  t.pulseAnim=.45;
+  if(def.ptype==='chain'){
+    t.chainLife=.28;t.chainTargets=[tgt];
+    dmgEnemy(tgt,t.dmg,1,t);
+    let last=tgt;const chains=(def.chains||3)+Math.floor(t.upgs.damage/2);
+    for(let i=0;i<chains;i++){
+      let nx=null,nd=999;
+      for(const e of S.enemies){if(e.dead||t.chainTargets.includes(e)) continue;const dx=e.x-last.x,dy=e.y-last.y,d=Math.sqrt(dx*dx+dy*dy);if(d<130&&d<nd){nd=d;nx=e;}}
+      if(!nx) break;
+      t.chainTargets.push(nx);dmgEnemy(nx,t.dmg*.6,1,t);last=nx;
+    }
+  } else {
+    if(def.ptype==='laser') t.laserAnim=.12;
+    S.projectiles.push({id:S.pid++,ttype:t.type,ptype:def.ptype,
+      x:t.x,y:t.y,tx:tgt.x,ty:tgt.y,tid:tgt.id,
+      spd:def.bspd,dmg:t.dmg,slow:def.slow||1,aoe:def.aoe||0,
+      dot:def.dot||0,pull:def.pull||0,towerRef:t,dead:false,trail:[],t:0,angle:t.angle});
+  }
+}
+function upg(stat){
+  const t=S.selTower;if(!t) return;
+  const costs={damage:30,range:25,speed:35};
+  const cost=costs[stat]*(1+t.upgs[stat]);
+  if(S.pts<cost){showToast('Not enough points!');return;}
+  S.pts-=cost;t.upgs[stat]++;
+  const def=TD[t.type];
+  if(stat==='damage') t.dmg+=def.upgDmg;
+  else if(stat==='range') t.rng+=def.upgRng;
+  else if(stat==='speed') t.spd=Math.min(t.spd+def.upgSpd,6);
+  t.lvl=Math.min(4,1+Math.max(t.upgs.damage,t.upgs.range,t.upgs.speed));
+  updateSelPanel();updateHUD();
+}
+function sellSel(){
+  const t=S.selTower;if(!t) return;
+  const refund=Math.floor(TD[t.type].cost*.5);
+  S.pts+=refund;S.towers=S.towers.filter(x=>x!==t);
+  S.selTower=null;deselTower();updateHUD();showToast(`Sold for ${refund} pts`);
+}
+
+// =====================================================================
+// PROJECTILE SYSTEM
+// =====================================================================
+function moveProj(p,dt){
+  p.t+=dt;
+  const tg=S.enemies.find(e=>e.id===p.tid&&!e.dead);
+  if(tg){p.tx=tg.x;p.ty=tg.y;}
+  p.trail.unshift({x:p.x,y:p.y});
+  if(p.trail.length>10) p.trail.pop();
+  const dx=p.tx-p.x,dy=p.ty-p.y,dist=Math.sqrt(dx*dx+dy*dy);
+  const sp=p.spd*60*dt;
+  if(dist<sp+5){hitProj(p);p.dead=true;return;}
+  p.x+=dx/dist*sp;p.y+=dy/dist*sp;p.angle=Math.atan2(dy,dx);
+}
+function hitProj(p){
+  const def=TD[p.ttype];const r=p.aoe||14;
+  let any=false;
+  for(const e of S.enemies){
+    if(e.dead) continue;
+    const dx=e.x-p.tx,dy=e.y-p.ty;
+    if(Math.sqrt(dx*dx+dy*dy)<=r){
+      dmgEnemy(e,p.dmg,p.slow,p.towerRef);
+      if(p.dot>0){e.burnTimer=p.dot;e.burnDmg=p.dmg*.5;}
+      if(p.pull>0){const d2=Math.sqrt((e.x-p.tx)**2+(e.y-p.ty)**2)||1;e.x+=(p.tx-e.x)/d2*p.pull*40;e.y+=(p.ty-e.y)/d2*p.pull*40;}
+      any=true;if(!p.aoe) break;
+    }
+  }
+  if(any||p.aoe) spawnPt(p.tx,p.ty,def.color,p.aoe?14:6,p.aoe?10:5,p.aoe?3:1.5);
+  if(p.ptype==='missile') spawnDeathPts(p.tx,p.ty,def.color);
+}
+function dmgEnemy(e,dmg,slow,tower){
+  e.hp-=dmg;e.hitFlash=.1;addDmgN(e.x,e.y,Math.round(dmg));
+  if(slow<1){e.slow=slow;e.slowTimer=1.8;}
+  if(e.hp<=0&&!e.dead) killEnemy(e,tower);
+}
+
+// =====================================================================
+// XP & LEVEL
+// =====================================================================
+function addXP(amt){
+  S.playerXP+=amt;
+  while(S.playerLvl<XP_THRESH.length&&S.playerXP>=(XP_THRESH[S.playerLvl]||9e9)){
+    S.playerLvl++;
+    const nw=Object.entries(TD).find(([k,d])=>d.unlockLvl===S.playerLvl);
+    let msg=`⭐ LEVEL ${S.playerLvl}!`;
+    if(nw) msg+=`\n${nw[1].emoji} ${nw[1].name}\nUNLOCKED!`;
+    showLvlUp(msg);renderTowerBtns();
+    for(let i=0;i<20;i++){const a=Math.random()*Math.PI*2;S.particles.push({x:CW/2,y:CH/2,vx:Math.cos(a)*4,vy:Math.sin(a)*4,color:'#fbbf24',life:1.2,maxLife:1.2,r:5});}
+  }
+  updateXPBar();
+}
+function updateXPBar(){
+  const lvl=S.playerLvl,cur=S.playerXP;
+  const prev=XP_THRESH[lvl-1]||0,next=XP_THRESH[lvl]||prev+500;
+  const pct=Math.min(100,((cur-prev)/(next-prev))*100);
+  document.getElementById('xp-bar').style.width=pct+'%';
+  document.getElementById('xp-lbl').textContent=`LVL ${lvl} · ${cur-prev} / ${next-prev} XP`;
+}
+
+// =====================================================================
+// PARTICLES
+// =====================================================================
+function spawnPt(x,y,color,n,rMax,sMax){
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=Math.random()*sMax+.5;S.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color,life:.5,maxLife:.5,r:Math.random()*rMax+1});}
+}
+function spawnDeathPts(x,y,color){
+  for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,s=Math.random()*4+1;S.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,color,life:1,maxLife:1,r:Math.random()*5+2});}
+}
+function updatePts(dt){
+  for(const p of S.particles){p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;p.vy+=.04*dt*60;p.life-=dt;}
+  S.particles=S.particles.filter(p=>p.life>0);
+}
+function addDmgN(x,y,v){S.dmgNums.push({x,y:y-8,val:v,life:.8,maxLife:.8});}
+function updateDmgNs(dt){for(const d of S.dmgNums){d.y-=.6*dt*60;d.life-=dt;}S.dmgNums=S.dmgNums.filter(d=>d.life>0);}
+
+// =====================================================================
+// QUESTION / DECK SYSTEM
+// =====================================================================
+function rebuildDeck(){
+  const avail=[];
+  for(let i=0;i<Q.length;i++) if(!S.masteredSet.has(i)) avail.push(i);
+  if(avail.length===0){S.masteredSet.clear();for(let i=0;i<Q.length;i++) avail.push(i);}
+  S.qDeck=shuffle(avail);S.qDeckPos=0;
+}
+function getNextQ(){
+  if(S.qDeckPos>=S.qDeck.length) rebuildDeck();
+  S.curQIdx=S.qDeck[S.qDeckPos++];
+  return Q[S.curQIdx];
+}
+
+// =====================================================================
+// QUIZ SYSTEM
+// =====================================================================
+let curQ=null;
+function openQuiz(){
+  if(S.screen!=='game') return;
+  curQ=getNextQ();
+  document.getElementById('q-unit').textContent=curQ.unit;
+  // Stimulus
+  const stimEl=document.getElementById('q-stim');
+  const st=curQ.stimulus;
+  stimEl.innerHTML=`<div class="stim-type">${st.label}</div>
+    <div class="stim-content${st.type==='quote'?' is-quote':''}">${st.content}</div>
+    <div class="stim-source">${st.source}</div>`;
+  // Streak banner
+  const np=5*(S.streak+1);
+  const banner=document.getElementById('q-banner');
+  banner.textContent=S.streak>0?`🔥 Streak x${S.streak} — Answer correctly to earn ${np} pts!`:`Answer correctly to earn ${np} pts`;
+  document.getElementById('q-text').textContent=curQ.question;
+  // Choices
+  const ch=document.getElementById('q-choices');
+  ch.innerHTML='';
+  curQ.choices.forEach(c=>{
+    const btn=document.createElement('button');
+    btn.className='cbtn';btn.textContent=c;
+    btn.onclick=()=>answerQ(c,curQ);
+    ch.appendChild(btn);
+  });
+  document.getElementById('q-result').style.display='none';
+  document.getElementById('q-correct-section').style.display='none';
+  document.getElementById('q-cont').style.display='none';
+  document.getElementById('quiz-modal').classList.add('active');
+  S.paused=true;
+}
+function answerQ(sel,q){
+  document.querySelectorAll('.cbtn').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent===q.answer) b.classList.add('correct');
+    else if(b.textContent===sel) b.classList.add('incorrect');
+  });
+  const correct=sel===q.answer;
+  let earned=0;
+  if(correct){
+    earned=5*(S.streak+1);S.pts+=earned;S.streak++;S.qCorrect++;
+    S.masteredSet.add(S.curQIdx); // retire correct question
+  } else {
+    S.wrongList.push({idx:S.curQIdx,selected:sel,q});
+    S.streak=0;
+  }
+  S.qAnswered++;
+  // Wave gate progress
+  S.waveQCount++;
+  updateWaveGate();
+  updateHUD();
+
+  // Result display
+  const res=document.getElementById('q-result');
+  res.style.display='block';
+  res.className='q-result '+(correct?'ok':'bad');
+  document.getElementById('q-verdict').innerHTML=correct
+    ?`<span style="color:#34d399">✓ CORRECT! +${earned} pts${S.streak>1?` (🔥 x${S.streak-1} streak!)`:''}</span>`
+    :`<span style="color:#fb7185">✗ INCORRECT · 0 pts · Streak reset</span>`;
+
+  if(correct){
+    // Show why correct
+    document.getElementById('q-sel-lbl').style.color='#34d399';
+    document.getElementById('q-sel-lbl').textContent='✓ Your Answer (Correct)';
+    document.getElementById('q-sel-text').textContent=sel;
+    document.getElementById('q-sel-why').textContent=q.explanation;
+    document.getElementById('q-sel-why').style.color='#7dd3fc';
+    document.getElementById('q-correct-section').style.display='none';
+  } else {
+    // Show why selected answer is wrong
+    document.getElementById('q-sel-lbl').style.color='#fb7185';
+    document.getElementById('q-sel-lbl').textContent='✗ Your Answer (Incorrect)';
+    document.getElementById('q-sel-text').textContent=sel;
+    const whyWrong=q.distractors&&q.distractors[sel]?q.distractors[sel]:'This answer is not supported by historical evidence.';
+    document.getElementById('q-sel-why').textContent='Why this is wrong: '+whyWrong;
+    document.getElementById('q-sel-why').style.color='#f87171';
+    // Show why correct is correct
+    document.getElementById('q-correct-section').style.display='block';
+    document.getElementById('q-correct-text').textContent=q.answer;
+    document.getElementById('q-correct-why').textContent='Why this is correct: '+q.explanation;
+  }
+  document.getElementById('q-cont').style.display='block';
+}
+function closeQuiz(){
+  document.getElementById('quiz-modal').classList.remove('active');
+  S.paused=false;
+}
+
+// =====================================================================
+// WAVE GATE
+// =====================================================================
+function updateWaveGate(){
+  const count=Math.min(S.waveQCount,S.waveQRequired);
+  const pct=(count/S.waveQRequired)*100;
+  const done=count>=S.waveQRequired;
+  document.getElementById('wg-bar').style.width=pct+'%';
+  document.getElementById('wg-label').innerHTML=done
+    ?'<b style="color:#34d399">✓ Wave unlocked! Press START WAVE</b>'
+    :'Answer <b style="color:#f59e0b">'+count+'/'+S.waveQRequired+'</b> questions to unlock wave';
+  // Dots
+  const dots=document.getElementById('wg-dots');
+  dots.innerHTML='';
+  for(let i=0;i<S.waveQRequired;i++){
+    const d=document.createElement('div');
+    d.className='wg-dot'+(i<count?' filled':'');
+    dots.appendChild(d);
+  }
+  document.getElementById('next-wave-btn').disabled=!done||S.waveActive;
+}
+
+// =====================================================================
+// WAVE MANAGEMENT
+// =====================================================================
+function startWave(){
+  if(S.waveActive||S.waveQCount<S.waveQRequired) return;
+  S.wave++;S.waveActive=true;
+  S.spawnQueue=buildWaveQ(S.wave);S.spawnTimer=0;
+  S.waveQCount=0; // reset gate for next wave
+  updateWaveGate();
+  document.getElementById('next-wave-btn').disabled=true;
+  showAnnounce(`⚔ WAVE ${S.wave}`);updateHUD();
+}
+function checkWaveComplete(){
+  if(!S.waveActive) return;
+  if(S.spawnQueue.length===0&&S.enemies.every(e=>e.dead)){
+    S.waveActive=false;
+    document.getElementById('next-wave-btn').disabled=true;
+    showAnnounce(`✓ WAVE ${S.wave} CLEAR!\nAnswer 10 questions for next wave`);
+    // Auto open quiz after wave clear
+    setTimeout(()=>{if(S.screen==='game') openQuiz();},900);
+  }
+}
+
+// =====================================================================
+// ABILITIES
+// =====================================================================
+function ability(type){
+  if(S.screen!=='game') return;
+  const costs={emp:40,heal:60,nuke:80};const c=costs[type];
+  if(S.pts<c){showToast('Not enough points!');return;}
+  S.pts-=c;
+  if(type==='emp'){S.empActive=1;for(const e of S.enemies){if(!e.dead){e.slow=.15;e.slowTimer=3;}}showToast('⚡ EMP — all enemies slowed!');}
+  else if(type==='heal'){S.baseHp=Math.min(S.maxHp,S.baseHp+20);sflash('#34d399');showToast('💚 Base healed +20 HP');}
+  else if(type==='nuke'){for(const e of S.enemies){if(!e.dead) dmgEnemy(e,90,1,null);}spawnPt(CW/2,CH/2,'#a78bfa',30,12,4);showToast('🌀 Nuke — massive damage!');}
+  updateHUD();
+}
+
+// =====================================================================
+// TOWER SELECTION
+// =====================================================================
+function selTowerType(type){S.selType=S.selType===type?null:type;S.selTower=null;deselTower();renderTowerBtns();}
+function selTower(t){S.selTower=t;S.selType=null;renderTowerBtns();updateSelPanel();}
+function deselTower(){
+  document.getElementById('sel-panel').style.display='none';
+  document.getElementById('upg-panel').style.display='none';
+  document.getElementById('sell-btn').style.display='none';
+}
+function updateSelPanel(){
+  const t=S.selTower;if(!t) return;
+  const def=TD[t.type];
+  document.getElementById('sel-panel').style.display='block';
+  document.getElementById('upg-panel').style.display='block';
+  document.getElementById('sell-btn').style.display='block';
+  document.getElementById('sel-name').textContent=def.emoji+' '+def.name;
+  document.getElementById('sel-dmg').textContent=Math.round(t.dmg);
+  document.getElementById('sel-rng').textContent=Math.round(t.rng);
+  document.getElementById('sel-spd').textContent=t.spd.toFixed(2)+'/s';
+  document.getElementById('sel-kills').textContent=t.kills;
+  document.getElementById('sel-lvl').textContent=t.lvl+'/4';
+  const costs={damage:30,range:25,speed:35};
+  ['damage','range','speed'].forEach(st=>{
+    const upg=t.upgs[st],maxed=upg>=3;
+    const cv=maxed?'MAX':costs[st]*(1+upg)+'p';
+    const id=st==='damage'?'uc-dmg':st==='range'?'uc-rng':'uc-spd';
+    document.getElementById(id).textContent=cv;
+    const btn=document.querySelector(`#upg-panel button[onclick="upg('${st}')"]`);
+    if(btn) btn.disabled=maxed||(S.pts<costs[st]*(1+upg));
+  });
+}
+
+// =====================================================================
+// HUD
+// =====================================================================
+function updateHUD(){
+  document.getElementById('h-pts').textContent=S.pts;
+  document.getElementById('h-str').textContent='x'+S.streak;
+  document.getElementById('h-wave').textContent=S.wave;
+  document.getElementById('h-hp').textContent=S.baseHp;
+  document.getElementById('h-enem').textContent=S.enemies.filter(e=>!e.dead).length;
+  const np=5*(S.streak+1);
+  document.getElementById('next-pts').textContent=np;
+  document.getElementById('streak-hint').style.color=S.streak>0?'#f472b6':'#64748b';
+  if(S.selTower) updateSelPanel();
+}
+let toastTmr=null;
+function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');if(toastTmr) clearTimeout(toastTmr);toastTmr=setTimeout(()=>el.classList.remove('show'),2400);}
+function showAnnounce(txt){const el=document.getElementById('wave-announce');el.innerHTML=txt.replace('\n','<br>');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+function showLvlUp(txt){const el=document.getElementById('levelup-pop');el.innerHTML=txt.replace('\n','<br>');el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3000);}
+function sflash(c){S.sflash=1;S.sflashColor=c;}
+
+// =====================================================================
+// RENDERING — SHAPES
+// =====================================================================
+function drawHex(x,y,r,rot){ctx.beginPath();for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2+(rot||0);i===0?ctx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r):ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.closePath();}
+function drawOct(x,y,r,rot){ctx.beginPath();for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2+(rot||0);i===0?ctx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r):ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}ctx.closePath();}
+function drawStar(x,y,r,pts,rot){ctx.beginPath();for(let i=0;i<pts*2;i++){const a=(i/(pts*2))*Math.PI*2+(rot||0);const rad=i%2===0?r:r*.45;i===0?ctx.moveTo(x+Math.cos(a)*rad,y+Math.sin(a)*rad):ctx.lineTo(x+Math.cos(a)*rad,y+Math.sin(a)*rad);}ctx.closePath();}
+function drawDiamond(x,y,r){ctx.beginPath();ctx.moveTo(x,y-r*1.5);ctx.lineTo(x+r*.8,y);ctx.lineTo(x,y+r);ctx.lineTo(x-r*.8,y);ctx.closePath();}
+function drawLightning(x1,y1,x2,y2){const dx=x2-x1,dy=y2-y1,n=6,pts=[{x:x1,y:y1}];for(let i=1;i<n;i++){const t=i/n;pts.push({x:x1+dx*t+(Math.random()-.5)*22,y:y1+dy*t+(Math.random()-.5)*22});}pts.push({x:x2,y:y2});ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke();}
+
+// =====================================================================
+// RENDERING — DRAW BG
+// =====================================================================
+function drawBG(){
+  ctx.fillStyle='#030712';ctx.fillRect(0,0,CW,CH);
+  ctx.strokeStyle='#0c1c30';ctx.lineWidth=.5;
+  for(let c=0;c<=COLS;c++){ctx.beginPath();ctx.moveTo(c*CELL,0);ctx.lineTo(c*CELL,CH);ctx.stroke();}
+  for(let r=0;r<=ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*CELL);ctx.lineTo(CW,r*CELL);ctx.stroke();}
+  const t=Date.now()/1000;
+  for(const s of S.bgStars){const a=.25+.28*Math.abs(Math.sin(t*.4+s.b));ctx.fillStyle=`rgba(148,163,184,${a})`;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();}
+}
+function drawPath(){
+  ctx.strokeStyle='#150b30';ctx.lineWidth=CELL;ctx.lineCap='square';
+  ctx.shadowColor='#7c3aed20';ctx.shadowBlur=20;
+  ctx.beginPath();ctx.moveTo(PATH_PTS[0].x,PATH_PTS[0].y);
+  for(let i=1;i<PATH_PTS.length;i++) ctx.lineTo(PATH_PTS[i].x,PATH_PTS[i].y);
+  ctx.stroke();ctx.shadowBlur=0;
+  ctx.strokeStyle='#0d1a2e';ctx.lineWidth=CELL-2;
+  ctx.beginPath();ctx.moveTo(PATH_PTS[0].x,PATH_PTS[0].y);
+  for(let i=1;i<PATH_PTS.length;i++) ctx.lineTo(PATH_PTS[i].x,PATH_PTS[i].y);
+  ctx.stroke();
+  const last=PATH_PTS[PATH_PTS.length-1];
+  const hf=S.baseHp/S.maxHp;
+  const bc=hf>.5?'#34d399':hf>.25?'#fbbf24':'#fb7185';
+  ctx.shadowColor=bc;ctx.shadowBlur=16;ctx.strokeStyle=bc;ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(last.x,last.y,18,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle=bc;ctx.font=`${Math.max(8,CELL/5)}px Orbitron`;ctx.textAlign='center';
+  ctx.fillText('BASE',last.x-14,last.y+5);ctx.shadowBlur=0;
+}
+function drawBuildHint(){
+  if(!S.selType) return;
+  const hc=S.hoverCell;
+  if(hc){
+    const ok=isBuildable(hc.col,hc.row);
+    ctx.fillStyle=ok?'rgba(56,189,248,.12)':'rgba(251,113,133,.12)';
+    ctx.strokeStyle=ok?'#38bdf8':'#fb7185';ctx.lineWidth=1.5;
+    ctx.fillRect(hc.col*CELL,hc.row*CELL,CELL,CELL);
+    ctx.strokeRect(hc.col*CELL+.5,hc.row*CELL+.5,CELL-1,CELL-1);
+    if(ok){
+      const def=TD[S.selType];ctx.strokeStyle=def.color+'28';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(hc.col*CELL+CELL/2,hc.row*CELL+CELL/2,def.rng,0,Math.PI*2);ctx.stroke();
+    }
+  }
+}
+function drawEnemies(){
+  const time=Date.now()/1000;
+  for(const e of S.enemies){
+    if(e.dead) continue;
+    const fl=e.hitFlash>0;
+    ctx.shadowColor=e.color;ctx.shadowBlur=fl?20:10;
+    const c=fl?'#ffffff':e.color;
+    ctx.save();ctx.translate(e.x,e.y);
+    if(e.def.shape==='hex'){
+      ctx.fillStyle=c+'cc';drawHex(0,0,e.size,e.t*.5);ctx.fill();
+      ctx.strokeStyle=e.color;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.fillStyle=fl?'#fff':e.color;ctx.beginPath();ctx.arc(0,0,e.size*.4,0,Math.PI*2);ctx.fill();
+    } else if(e.def.shape==='diamond'){
+      ctx.fillStyle=c;drawDiamond(0,0,e.size);ctx.fill();
+      ctx.strokeStyle='#fffb';ctx.lineWidth=1;ctx.stroke();
+      ctx.strokeStyle=e.color+'60';ctx.lineWidth=1.5;
+      for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-e.size-i*5,(-e.size/3+i*3));ctx.lineTo(0,-e.size/3+i*3);ctx.stroke();}
+    } else if(e.def.shape==='octagon'){
+      ctx.fillStyle=c+'cc';drawOct(0,0,e.size,0);ctx.fill();
+      ctx.strokeStyle=e.color;ctx.lineWidth=2;ctx.stroke();
+      ctx.strokeStyle=e.color+'70';ctx.lineWidth=1;drawOct(0,0,e.size*.65,Math.PI/8);ctx.stroke();
+      ctx.fillStyle=c+'aa';ctx.beginPath();ctx.arc(0,0,e.size*.3,0,Math.PI*2);ctx.fill();
+    } else if(e.def.shape==='star'){
+      ctx.fillStyle=c+'cc';drawStar(0,0,e.size,5,e.t*.7);ctx.fill();
+      ctx.strokeStyle=e.color;ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle=e.color+'40';ctx.lineWidth=1;
+      ctx.beginPath();ctx.arc(0,0,e.size+4+Math.sin(e.t*3)*2,0,Math.PI*2);ctx.stroke();
+    } else if(e.def.shape==='boss'){
+      const pulse=1+Math.sin(e.t*3)*.08;
+      for(let ring=0;ring<3;ring++){
+        const rr=e.size*(1+ring*.3)*pulse;
+        ctx.strokeStyle=e.color+Math.floor((.8-ring*.2)*255).toString(16).padStart(2,'0');
+        ctx.lineWidth=2+ring;ctx.beginPath();ctx.arc(0,0,rr,0,Math.PI*2);ctx.stroke();
+        for(let d=0;d<4;d++){const a=(d/4)*Math.PI*2+e.t*(ring%2===0?1:-1);ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(Math.cos(a)*rr,Math.sin(a)*rr,3,0,Math.PI*2);ctx.fill();}
+      }
+      ctx.fillStyle=c;ctx.beginPath();ctx.arc(0,0,e.size*.5,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();ctx.shadowBlur=0;
+    if(e.slowTimer>0){ctx.strokeStyle='#22d3ee80';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(e.x,e.y,e.size+5,0,Math.PI*2);ctx.stroke();}
+    const bw=e.size*2+6,bh=4,bx=e.x-bw/2,by=e.y-e.size-9;
+    ctx.fillStyle='#1e293b';ctx.fillRect(bx,by,bw,bh);
+    const hf=Math.max(0,e.hp/e.maxHp);
+    ctx.fillStyle=hf>.5?'#22c55e':hf>.25?'#eab308':'#ef4444';ctx.fillRect(bx,by,bw*hf,bh);
+  }
+}
+function drawTowers(){
+  for(const t of S.towers){
+    const def=TD[t.type];const {x:cx,y:cy}=t;const sel=t===S.selTower;
+    if(sel){ctx.strokeStyle=def.color+'30';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,t.rng,0,Math.PI*2);ctx.stroke();}
+    if(t.pulseAnim>0){const pr=1-t.pulseAnim/.45,prad=10+pr*28;ctx.strokeStyle=def.color+Math.floor((1-pr)*160).toString(16).padStart(2,'0');ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,prad,0,Math.PI*2);ctx.stroke();}
+    ctx.save();ctx.translate(cx,cy);ctx.rotate(t.angle);
+    ctx.shadowColor=def.color;ctx.shadowBlur=sel?18:8;
+    ctx.fillStyle='#060c18';ctx.strokeStyle=def.color;ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(0,0,14,0,Math.PI*2);ctx.fill();ctx.stroke();
+    const tp=t.type;
+    if(tp==='laser'){ctx.fillStyle=def.color;ctx.fillRect(-2.5,-11,5,14);ctx.fillRect(-6,-4,12,6);}
+    else if(tp==='pulse'){ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(0,0,8,0,Math.PI*2);ctx.fill();ctx.strokeStyle=def.color;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(13,0);ctx.stroke();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,3,0,Math.PI*2);ctx.fill();}
+    else if(tp==='freeze'){ctx.strokeStyle=def.color;ctx.lineWidth=2;for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(a)*11,Math.sin(a)*11);ctx.stroke();}ctx.fillStyle='#06b6d4';ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();}
+    else if(tp==='tesla'){ctx.strokeStyle=def.color;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,9,0,Math.PI);ctx.stroke();ctx.beginPath();ctx.arc(0,-5,6,Math.PI,0);ctx.stroke();ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(0,-10,3,0,Math.PI*2);ctx.fill();}
+    else if(tp==='sniper'){ctx.fillStyle=def.color;ctx.fillRect(-2,-16,4,18);ctx.fillRect(-8,-6,16,6);ctx.fillRect(-4,-10,2,4);}
+    else if(tp==='missile'){ctx.fillStyle=def.color;ctx.fillRect(-10,-2,20,6);ctx.fillRect(-3,-10,6,10);ctx.beginPath();ctx.moveTo(-3,-10);ctx.lineTo(0,-15);ctx.lineTo(3,-10);ctx.closePath();ctx.fill();}
+    else if(tp==='inferno'){ctx.strokeStyle=def.color;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,10,-Math.PI*.6,Math.PI*.6);ctx.stroke();ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,7,-Math.PI*.4,Math.PI*.4);ctx.stroke();ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(0,0,4,0,Math.PI*2);ctx.fill();}
+    else if(tp==='vortex'){const oa=t.orbitAngle;for(let ri=0;ri<3;ri++){ctx.strokeStyle=def.color+(ri===0?'ff':ri===1?'aa':'55');ctx.lineWidth=1.5;ctx.save();ctx.rotate(oa*(ri%2===0?1:-1)+ri*Math.PI/3);ctx.beginPath();ctx.ellipse(0,0,12-ri*2,5,0,0,Math.PI*2);ctx.stroke();ctx.restore();}ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();}
+    ctx.shadowBlur=0;ctx.restore();
+    if(t.lvl>1){ctx.fillStyle='#fbbf24';ctx.font=`${Math.max(7,CELL/6)}px sans-serif`;ctx.textAlign='center';ctx.fillText('★'.repeat(t.lvl-1),cx,cy+19);}
+    if(tp==='tesla'&&t.chainLife>0&&t.chainTargets.length>1){
+      ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5;ctx.shadowColor='#fbbf24';ctx.shadowBlur=8;
+      if(!t.chainTargets[0].dead) drawLightning(t.x,t.y,t.chainTargets[0].x,t.chainTargets[0].y);
+      for(let i=0;i<t.chainTargets.length-1;i++){const a=t.chainTargets[i],b=t.chainTargets[i+1];if(!a.dead&&!b.dead) drawLightning(a.x,a.y,b.x,b.y);}
+      ctx.shadowBlur=0;
+    }
+    if(tp==='laser'&&t.laserAnim>0){const te=S.enemies.find(e=>!e.dead);if(te){const g=ctx.createLinearGradient(cx,cy,te.x,te.y);g.addColorStop(0,def.color+'ff');g.addColorStop(1,def.color+'00');ctx.strokeStyle=g;ctx.lineWidth=2;ctx.shadowColor=def.color;ctx.shadowBlur=8;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(te.x,te.y);ctx.stroke();ctx.shadowBlur=0;}}
+    if(tp==='sniper'){ctx.strokeStyle=def.color+'30';ctx.lineWidth=1;ctx.setLineDash([3,5]);const ex=cx+Math.cos(t.angle)*t.rng,ey=cy+Math.sin(t.angle)*t.rng;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ex,ey);ctx.stroke();ctx.setLineDash([]);}
+  }
+}
+function drawProjectiles(){
+  for(const p of S.projectiles){
+    if(p.dead) continue;const def=TD[p.ttype];
+    for(let i=0;i<p.trail.length;i++){const a=(1-(i+1)/p.trail.length)*.55;ctx.fillStyle=def.color+Math.floor(a*255).toString(16).padStart(2,'0');ctx.beginPath();ctx.arc(p.trail[i].x,p.trail[i].y,3-(i/p.trail.length)*2,0,Math.PI*2);ctx.fill();}
+    ctx.shadowColor=def.color;ctx.shadowBlur=10;
+    if(p.ptype==='missile'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.angle);ctx.fillStyle=def.color;ctx.fillRect(-6,-2.5,10,5);ctx.beginPath();ctx.moveTo(4,-2.5);ctx.lineTo(8,0);ctx.lineTo(4,2.5);ctx.closePath();ctx.fill();ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(-6,0,3,0,Math.PI*2);ctx.fill();ctx.restore();}
+    else if(p.ptype==='fire'){ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,Math.PI*2);ctx.fill();spawnPt(p.x,p.y,'#ef4444',1,3,1);}
+    else if(p.ptype==='vortex'){ctx.fillStyle=def.color;const sp=p.t*6;for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2+sp;ctx.beginPath();ctx.arc(p.x+Math.cos(a)*5,p.y+Math.sin(a)*5,2.5,0,Math.PI*2);ctx.fill();}}
+    else if(p.ptype==='sniper'){ctx.fillStyle='#fff';ctx.strokeStyle=def.color;ctx.lineWidth=1;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();ctx.stroke();}
+    else if(p.ptype==='freeze'){ctx.fillStyle=def.color;for(let i=0;i<6;i++){const a=(i/6)*Math.PI*2+p.t*2;ctx.beginPath();ctx.arc(p.x+Math.cos(a)*4,p.y+Math.sin(a)*4,2,0,Math.PI*2);ctx.fill();}}
+    else{const r=p.ptype==='pulse'?6:4;ctx.fillStyle=def.color;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();}
+    ctx.shadowBlur=0;
+  }
+}
+function drawParticles(){for(const p of S.particles){const a=p.life/p.maxLife;ctx.fillStyle=p.color+Math.floor(a*200).toString(16).padStart(2,'0');ctx.beginPath();ctx.arc(p.x,p.y,p.r*a,0,Math.PI*2);ctx.fill();}}
+function drawDmgNums(){for(const d of S.dmgNums){const a=d.life/d.maxLife;ctx.fillStyle=`rgba(251,191,36,${a})`;ctx.font=`bold ${Math.max(9,CELL/4)}px Orbitron`;ctx.textAlign='center';ctx.fillText(d.val,d.x,d.y);}}
+function drawUI(){
+  if(S.empActive>0){ctx.fillStyle=`rgba(56,189,248,${S.empActive*.2})`;ctx.fillRect(0,0,CW,CH);S.empActive-=.033;}
+  if(S.sflash>0){ctx.fillStyle=S.sflashColor+Math.floor(S.sflash*170).toString(16).padStart(2,'0');ctx.fillRect(0,0,CW,CH);S.sflash=Math.max(0,S.sflash-.08);}
+  if(!S.waveActive&&S.screen==='game'){
+    ctx.fillStyle='rgba(3,7,18,.3)';ctx.fillRect(0,0,CW,CH);
+    const done=S.waveQCount>=S.waveQRequired;
+    ctx.fillStyle=done?'#34d399':'#7dd3fc80';
+    ctx.font=`${Math.max(9,CELL/3.5)}px Orbitron`;ctx.textAlign='center';
+    const msg=done?'▶ Wave Unlocked! Press START WAVE':`📚 Answer ${S.waveQRequired-S.waveQCount} more questions to unlock wave`;
+    ctx.fillText(msg,CW/2,CH-14);
+  }
+}
+
+// =====================================================================
+// GAME LOOP
+// =====================================================================
+let RAF=null;
+function gameLoop(ts){
+  if(S.screen!=='game') return;
+  const dt=Math.min((ts-S.lastTime)/1000,.05);S.lastTime=ts;
+  if(!S.paused){
+    if(S.waveActive&&S.spawnQueue.length>0){S.spawnTimer-=dt;if(S.spawnTimer<=0){spawnEnemy(S.spawnQueue.shift());S.spawnTimer=Math.max(.28,.8-S.wave*.024);}}
+    for(const e of S.enemies) if(!e.dead) moveEnemy(e,dt);
+    S.enemies=S.enemies.filter(e=>!e.dead);
+    for(const t of S.towers) towerShoot(t,dt);
+    for(const p of S.projectiles) if(!p.dead) moveProj(p,dt);
+    S.projectiles=S.projectiles.filter(p=>!p.dead);
+    updatePts(dt);updateDmgNs(dt);
+    if(S.baseHp<=0){S.screen='gameover';showGO();return;}
+    checkWaveComplete();updateXPBar();
+  }
+  drawBG();drawPath();drawBuildHint();drawTowers();drawEnemies();drawProjectiles();drawParticles();drawDmgNums();drawUI();
+  RAF=requestAnimationFrame(gameLoop);
+}
+
+// =====================================================================
+// INPUT
+// =====================================================================
+canvas.addEventListener('mousemove',ev=>{const r=canvas.getBoundingClientRect();S.hoverCell={col:Math.floor((ev.clientX-r.left)/CELL),row:Math.floor((ev.clientY-r.top)/CELL)};});
+canvas.addEventListener('mouseleave',()=>{S.hoverCell=null;});
+canvas.addEventListener('click',ev=>{
+  if(S.screen!=='game') return;
+  const r=canvas.getBoundingClientRect();
+  const col=Math.floor((ev.clientX-r.left)/CELL),row=Math.floor((ev.clientY-r.top)/CELL);
+  const clicked=S.towers.find(t=>t.col===col&&t.row===row);
+  if(clicked){selTower(clicked);S.selType=null;renderTowerBtns();return;}
+  if(S.selType&&isBuildable(col,row)){
+    const cost=TD[S.selType].cost;
+    if(S.pts<cost){showToast('Not enough points!');return;}
+    S.pts-=cost;const t=mkTower(S.selType,col,row);t.x=col*CELL+CELL/2;t.y=row*CELL+CELL/2;
+    S.towers.push(t);spawnPt(t.x,t.y,TD[S.selType].color,8,6,2);updateHUD();return;
+  }
+  if(!S.selType){S.selTower=null;deselTower();}
+});
+
+// =====================================================================
+// ROLE SELECTION
+// =====================================================================
+function selectRole(role){
+  if(role==='student'){
+    document.getElementById('role-screen').style.display='none';
+    document.getElementById('title-screen').style.display='flex';
+  } else {
+    document.getElementById('teacher-pwd-modal').classList.add('active');
+    setTimeout(()=>document.getElementById('teacher-pwd').focus(),100);
+  }
+}
+function checkPwd(){
+  const pwd=document.getElementById('teacher-pwd').value;
+  const err=document.getElementById('pwd-err');
+  if(pwd==='IAMTEACHER12'){
+    document.getElementById('teacher-pwd-modal').classList.remove('active');
+    document.getElementById('teacher-pwd').value='';
+    err.style.display='none';
+    openTeacherPortal();
+  } else {
+    err.style.display='block';
+    document.getElementById('teacher-pwd').value='';
+    document.getElementById('teacher-pwd').focus();
+  }
+}
+function closePwd(){
+  document.getElementById('teacher-pwd-modal').classList.remove('active');
+  document.getElementById('teacher-pwd').value='';
+  document.getElementById('pwd-err').style.display='none';
+}
+
+// =====================================================================
+// TEACHER PORTAL
+// =====================================================================
+function openTeacherPortal(){
+  const body=document.getElementById('tp-body');
+  body.innerHTML='';
+  Q.forEach((q,idx)=>{
+    const div=document.createElement('div');div.className='tp-q';
+    const st=q.stimulus;
+    div.innerHTML=`
+      <div class="tp-unit">${idx+1}. ${q.unit}</div>
+      <div class="tp-stim">
+        <div class="tp-stim-lbl">${st.label}</div>
+        <div style="font-size:10px;color:#94a3b8;white-space:pre-wrap;${st.type==='quote'?'border-left:3px solid #7c3aed40;padding-left:8px;color:#c4b5fd;font-style:italic;':''}">${st.content}</div>
+        <div style="font-size:9px;color:#64748b;margin-top:4px;">${st.source}</div>
+      </div>
+      <div class="tp-q-text">${q.question}</div>
+      ${q.choices.map(c=>{
+        const isCorrect=c===q.answer;
+        const expl=isCorrect?q.explanation:(q.distractors&&q.distractors[c]?q.distractors[c]:'');
+        return `<div class="tp-choice ${isCorrect?'tp-correct':'tp-wrong'}">
+          ${isCorrect?'✓':'✗'} ${c}
+          ${isCorrect?`<div class="tp-expl">✓ Why correct: ${expl}</div>`:''}
+          ${!isCorrect&&expl?`<div class="tp-wrong-expl">✗ Why wrong: ${expl}</div>`:''}
+        </div>`;
+      }).join('')}`;
+    body.appendChild(div);
+  });
+  document.getElementById('teacher-portal').style.display='flex';
+}
+function closeTeacherPortal(){
+  document.getElementById('teacher-portal').style.display='none';
+}
+
+// =====================================================================
+// WRONG ANSWER REVIEW
+// =====================================================================
+function openReview(){
+  renderReview();
+  document.getElementById('review-modal').style.display='flex';
+}
+function openReviewFromGO(){
+  document.getElementById('gameover-screen').style.display='none';
+  renderReview();
+  document.getElementById('review-modal').style.display='flex';
+}
+function closeReview(){
+  document.getElementById('review-modal').style.display='none';
+  if(S.screen==='gameover') document.getElementById('gameover-screen').style.display='flex';
+}
+function renderReview(){
+  const body=document.getElementById('rm-body');
+  if(!S||S.wrongList.length===0){body.innerHTML='<div style="color:#64748b;font-size:11px;padding:20px;text-align:center;">No wrong answers yet — keep playing!</div>';return;}
+  body.innerHTML='';
+  // Deduplicate by question idx (show each wrong question once)
+  const seen=new Set();
+  S.wrongList.filter(w=>{if(seen.has(w.idx)) return false;seen.add(w.idx);return true;}).forEach(w=>{
+    const q=w.q;const div=document.createElement('div');div.className='rm-q';
+    div.innerHTML=`<div class="rm-unit">${q.unit}</div>
+      <div class="rm-qtext">${q.question}</div>
+      <div class="rm-your">✗ Your Answer: ${w.selected}
+        ${q.distractors&&q.distractors[w.selected]?`<div style="font-size:9px;color:#f87171;margin-top:3px;">Why wrong: ${q.distractors[w.selected]}</div>`:''}
+      </div>
+      <div class="rm-correct">✓ Correct: ${q.answer}
+        <div class="rm-expl">Why correct: ${q.explanation}</div>
+      </div>`;
+    body.appendChild(div);
+  });
+}
+
+// =====================================================================
+// GAME FLOW
+// =====================================================================
+function startGame(){
+  document.getElementById('title-screen').style.display='none';
+  document.getElementById('game-wrapper').style.display='flex';
+  if(RAF) cancelAnimationFrame(RAF);
+  initS();resizeGame();renderTowerBtns();updateHUD();updateXPBar();updateWaveGate();
+  S.screen='game';S.lastTime=performance.now();
+  RAF=requestAnimationFrame(gameLoop);
+}
+function restartGame(){
+  document.getElementById('gameover-screen').style.display='none';
+  if(RAF) cancelAnimationFrame(RAF);
+  initS();resizeGame();renderTowerBtns();updateHUD();updateXPBar();updateWaveGate();
+  S.screen='game';S.lastTime=performance.now();
+  RAF=requestAnimationFrame(gameLoop);
+}
+function showGO(){
+  if(RAF) cancelAnimationFrame(RAF);
+  const el=document.getElementById('gameover-screen');
+  document.getElementById('go-stats').innerHTML=
+    `Waves Survived: <span>${S.wave}</span><br>
+     Player Level: <span>${S.playerLvl}</span><br>
+     Questions Answered: <span>${S.qAnswered}</span><br>
+     Correct: <span>${S.qCorrect} / ${S.qAnswered}</span><br>
+     Best Streak: <span>x${S.streak}</span><br>
+     Enemies Defeated: <span>${S.kills}</span>`;
+  el.style.display='flex';
+}
+function togglePause(){S.paused=!S.paused;document.getElementById('pause-btn').textContent=S.paused?'▶ RESUME':'⏸ PAUSE';}
+
+// =====================================================================
+// UTILITIES
+// =====================================================================
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function genStars(){const s=[];for(let i=0;i<70;i++) s.push({x:Math.random()*2000,y:Math.random()*1200,r:Math.random()*1.5+.5,b:Math.random()*6});return s;}
+
+// Password field enter key
+document.getElementById('teacher-pwd').addEventListener('keydown',e=>{if(e.key==='Enter') checkPwd();});
+
+// Initial resize
+resizeGame();
+</script>
+</body>
+</html>
